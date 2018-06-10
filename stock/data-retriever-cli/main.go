@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"../data-retriever/hkex"
 )
 
@@ -11,11 +13,11 @@ func check(err error) {
 }
 
 func main() {
-	_, err := hkex.Quote("700")
+	quote, err := hkex.Quote("700")
 	if err != nil {
 		panic(err)
 	}
-
+	fmt.Println(quote.ToString())
 	return
 
 	// var err error
@@ -30,5 +32,5 @@ func main() {
 	// for _, _ := range stocks {
 	// 	fmt.Println(stock.ShortCompanyName + " | " + stock.Symbol)
 	// }
-	return
+	// return
 }
