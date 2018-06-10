@@ -1,8 +1,10 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -30,4 +32,29 @@ func FormatRequest(r *http.Request) string {
 	}
 	// Return the request as a string
 	return strings.Join(request, "\n")
+}
+
+func StringToFloat32(str string) float32 {
+	value, err := strconv.ParseFloat(str, 32)
+	if err != nil {
+		panic(err)
+	}
+	return float32(value)
+}
+
+func StringToInt(str string) int {
+	value, err := strconv.Atoi(str)
+	if err != nil {
+		panic(err)
+	}
+	return value
+}
+
+func ObjectToJsonString(obj interface{}) string {
+	buf, err := json.MarshalIndent(obj, "", "	")
+	if err != nil {
+		panic(err)
+	}
+
+	return string(buf)
 }
