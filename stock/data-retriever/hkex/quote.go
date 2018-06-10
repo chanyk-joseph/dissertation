@@ -30,13 +30,13 @@ type EquityQuote struct {
 	Open            string `json:"op"`
 	High            string `json:"hi"`
 	Low             string `json:"lo"`
-	High52Week      string `json:"hi52"`
-	Low52Week       string `json:"lo52"`
+	High52Weeks     string `json:"hi52"`
+	Low52Weeks      string `json:"lo52"`
 
 	TurnOver     string `json:"am"`
 	TurnOverUnit string `json:"am_u"`
-	Volumn       string `json:"vo"`
-	VolumnUnit   string `json:"vo_u"`
+	Volume       string `json:"vo"`
+	VolumeUnit   string `json:"vo_u"`
 	Bid          string `json:"bd"`
 	Ask          string `json:"as"`
 }
@@ -45,14 +45,14 @@ func (quote EquityQuote) ToJSONString() string {
 	return util.ObjectToJsonString(quote)
 }
 
-func Quote(sym string) (EquityQuote, error) {
+func Quote(symbol string) (EquityQuote, error) {
 	result := EquityQuote{}
 
 	accessToken, err := getAccessToken()
 	if err != nil {
 		return result, err
 	}
-	urlStr := "https://www1.hkex.com.hk/hkexwidget/data/getequityquote?sym=" + sym + "&token=" + accessToken + "&lang=chi&qid=1528572605481&callback=jQuery311037427382333777826_1528572604782&_=1528572604783"
+	urlStr := "https://www1.hkex.com.hk/hkexwidget/data/getequityquote?sym=" + symbol + "&token=" + accessToken + "&lang=chi&qid=1528572605481&callback=jQuery311037427382333777826_1528572604782&_=1528572604783"
 
 	// fmt.Println(urlStr)
 

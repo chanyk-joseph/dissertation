@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 
-	"../data-retriever/bloomberg"
-	"../data-retriever/common/util"
+	"../data-retriever/aastocks"
 )
 
 func check(err error) {
@@ -14,9 +13,9 @@ func check(err error) {
 }
 
 func main() {
-	result, err := bloomberg.Quote("700:HK")
+	result, err := aastocks.Quote("00700")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(util.ObjectToJsonString(result))
+	fmt.Println(result.ToJSONString())
 }

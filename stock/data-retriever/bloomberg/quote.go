@@ -22,7 +22,7 @@ type EquityQuote struct {
 	Low             float32 `json:"low"`
 	High            float32 `json:"high"`
 	LastTradedPrice float32 `json:"last_traded_price"`
-	Volumn          int     `json:"volumn"`
+	Volume          int     `json:"volume"`
 
 	Low52Weeks  float32 `json:"low_52_weeks"`
 	High52Weeks float32 `json:"high_52_weeks"`
@@ -35,7 +35,7 @@ type EquityQuote struct {
 	PriceToSalesRatio float32 `json:"price_to_sales_ratio"`
 
 	OneYearReturn        string  `json:"one_year_return"`
-	AverageVolumn30Days  int     `json:"average_volumn_30_days"`
+	AverageVolume30Days  int     `json:"average_volume_30_days"`
 	EPS                  float32 `json:"EPS"`
 	BestEPSInCurrentYear float32 `json:"best_EPS_in_current_year"`
 	Dividend             string  `json:"dividend"`
@@ -47,10 +47,10 @@ func (quote EquityQuote) ToJSONString() string {
 }
 
 // Quote return result from bloomberg
-// Example Code: 700:HK
-func Quote(code string) (EquityQuote, error) {
+// Example symbol: 700:HK
+func Quote(symbol string) (EquityQuote, error) {
 	result := EquityQuote{}
-	urlStr := "https://www.bloomberg.com/quote/" + code
+	urlStr := "https://www.bloomberg.com/quote/" + symbol
 
 	client := &http.Client{}
 	r, _ := http.NewRequest("GET", urlStr, nil) // URL-encoded payload
@@ -83,7 +83,7 @@ func Quote(code string) (EquityQuote, error) {
 	result.Currency = match[5]
 	result.Open = util.StringToFloat32(match[6])
 	result.PreviousClose = util.StringToFloat32(match[7])
-	result.Volumn = util.StringToInt(strings.Replace(match[8], ",", "", -1))
+	result.Volume = util.StringToInt(strings.Replace(match[8], ",", "", -1))
 	result.MarketCap = match[9]
 	result.Low = util.StringToFloat32(match[10])
 	result.High = util.StringToFloat32(match[11])
@@ -102,7 +102,7 @@ func Quote(code string) (EquityQuote, error) {
 	result.PriceToBookRatio = util.StringToFloat32(match[5])
 	result.PriceToSalesRatio = util.StringToFloat32(match[6])
 	result.OneYearReturn = match[7]
-	result.AverageVolumn30Days = util.StringToInt(strings.Replace(match[8], ",", "", -1))
+	result.AverageVolume30Days = util.StringToInt(strings.Replace(match[8], ",", "", -1))
 	result.EPS = util.StringToFloat32(match[9])
 	result.BestEPSInCurrentYear = util.StringToFloat32(match[10])
 	result.Dividend = match[11]
