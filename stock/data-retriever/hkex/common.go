@@ -9,7 +9,7 @@ import (
 )
 
 func getAccessToken() (string, error) {
-	urlStr := "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities?sc_lang=zh-hk"
+	urlStr := "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities?sc_lang=en"
 
 	client := &http.Client{}
 	r, _ := http.NewRequest("GET", urlStr, nil)

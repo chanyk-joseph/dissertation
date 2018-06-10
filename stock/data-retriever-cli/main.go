@@ -13,7 +13,7 @@ func check(err error) {
 }
 
 func main() {
-	quote, err := hkex.Quote("700")
+	quote, err := hkex.Quote("5")
 	if err != nil {
 		panic(err)
 	}
