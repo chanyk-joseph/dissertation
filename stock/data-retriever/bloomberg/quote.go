@@ -1,8 +1,6 @@
 package bloomberg
 
 import (
-	"io/ioutil"
-	"net/http"
 	"regexp"
 	"strings"
 
@@ -10,8 +8,38 @@ import (
 	"github.com/pkg/errors"
 )
 
+/*
+Example JSON:
+{
+	"symbol": "700:HK",
+	"company_name": "Tencent Holdings Ltd",
+	"exchange": "Hong Kong",
+	"market_cap": "3.982T",
+	"currency": "HKD",
+	"previous_close": 415,
+	"open": 420,
+	"low": 415.6,
+	"high": 421,
+	"last_traded_price": 419,
+	"volume": 15480976,
+	"low_52_weeks": 260.4,
+	"high_52_weeks": 476.6,
+	"PE": 40.09,
+	"best_PE": 36.1544,
+	"best_PEG": 1.5491,
+	"shares_outstanding": "9.5B",
+	"price_to_book_ratio": 11.7053,
+	"price_to_sales_ratio": 12.3025,
+	"one_year_return": "51.37%",
+	"average_volume_30_days": 25278900,
+	"EPS": 8.53,
+	"best_EPS_in_current_year": 8.873,
+	"dividend": "0.21%",
+	"last_dividend_reported": 0.88
+}
+*/
 type EquityQuote struct {
-	Code        string `json:"code"`
+	Symbol      string `json:"symbol"`
 	CompanyName string `json:"company_name"`
 	Exchange    string `json:"exchange"`
 	MarketCap   string `json:"market_cap"`
@@ -52,31 +80,17 @@ func Quote(symbol string) (EquityQuote, error) {
 	result := EquityQuote{}
 	urlStr := "https://www.bloomberg.com/quote/" + symbol
 
-	client := &http.Client{}
-	r, _ := http.NewRequest("GET", urlStr, nil) // URL-encoded payload
-	r.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-	r.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36")
-
-	resp, err := client.Do(r)
+	_, bodyString, err := util.HttpGetResponseContent(urlStr)
 	if err != nil {
 		return result, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		return result, errors.Errorf("Failed To Get Quote | Response Status Code: %v | Request: \n%s", resp.StatusCode, util.FormatRequest(r))
-	}
-
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return result, errors.Wrap(err, "Failed To Get Response Body")
-	}
-	bodyString := string(bodyBytes)
 
 	var re = regexp.MustCompile(`(?m)companyId.*?>(.*?)<.*?exchange.*?>(.*?)<.*?companyName.*?>(.*?)<.*?priceText.*?>(.*?)<.*?currency.*?>(.*?)<.*?value.*?>(.*?)<.*?value.*?>(.*?)<.*?value.*?>(.*?)<.*?value.*?>(.*?)<.*?textLeft.*?>(.*?)<.*?-.*?textRight.*?>(.*?)<.*?textLeft.*?>(.*?)<.*?-.*?textRight.*?>(.*?)<`)
 	match := re.FindStringSubmatch(bodyString)
 	if len(match) != 14 {
 		return result, errors.Errorf("Unable To Extract Bloomberg Quote: \n%s", bodyString)
 	}
-	result.Code = match[1]
+	result.Symbol = match[1]
 	result.Exchange = match[2]
 	result.CompanyName = match[3]
 	result.LastTradedPrice = util.StringToFloat32(match[4])

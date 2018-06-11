@@ -10,6 +10,35 @@ import (
 	"github.com/pkg/errors"
 )
 
+/*
+Example JSON:
+{
+	"updatetime": "2018年6月11日16:09",
+	"nm_s": "騰訊控股",
+	"nm": "騰訊控股有限公司",
+	"sym": "700",
+	"ric": "0700.HK",
+	"eps": 7.5986,
+	"eps_ccy": "RMB",
+	"pe": "44.53",
+	"div_yield": "0.21",
+	"mkt_cap": "3,982.21",
+	"mkt_cap_u": "B",
+	"ls": "419.000",
+	"hc": "415.000",
+	"op": "420.000",
+	"hi": "421.000",
+	"lo": "415.600",
+	"hi52": "476.600",
+	"lo52": "260.379",
+	"am": "6.48",
+	"am_u": "B",
+	"vo": "15.48",
+	"vo_u": "M",
+	"bd": "418.800",
+	"as": "419.000"
+}
+*/
 type EquityQuote struct {
 	UpdateTime string `json:"updatetime"`
 

@@ -3,10 +3,36 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
+
+func HttpGetResponseContent(urlStr string) (*http.Request, string, error) {
+	client := &http.Client{}
+	r, _ := http.NewRequest("GET", urlStr, nil) // URL-encoded payload
+	r.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+	r.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36")
+
+	resp, err := client.Do(r)
+	if err != nil {
+		return nil, "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", errors.Errorf("Failed To Get Response | Response Status Code: %v | Request: \n%s", resp.StatusCode, FormatRequest(r))
+	}
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", errors.Wrap(err, "Failed To Get Response Body")
+	}
+	bodyString := string(bodyBytes)
+
+	return r, bodyString, nil
+}
 
 func FormatRequest(r *http.Request) string {
 	// Create return string

@@ -1,27 +1,58 @@
 package aastocks
 
 import (
-	"io/ioutil"
-	"net/http"
 	"regexp"
 
 	"../common/util"
 	"github.com/pkg/errors"
 )
 
+/*
+Example JSON:
+{
+	"symbol": "00700.HK",
+	"last_traded_price": 419,
+	"open": 420,
+	"low": 415.6,
+	"high": 421,
+	"bid": 418.8,
+	"ask": 419,
+	"privious_close": 415,
+	"volume": "15.48M",
+	"lot_size": 100,
+	"turnover": "6.49B",
+	"pe": 46,
+	"yield": "0.21%",
+	"dividend_payout": "9.661%",
+	"eps": 9.109,
+	"market_capital": "3,982.05B",
+	"net_asset_value": 32.32,
+	"low_52_weeks": 260.4,
+	"high_52_weeks": 476.6
+}
+*/
 type EquityQuote struct {
+	Symbol string `json:"symbol"`
+
 	LastTradedPrice float32 `json:"last_traded_price"`
+	Open            float32 `json:"open"`
 	Low             float32 `json:"low"`
 	High            float32 `json:"high"`
+	Bid             float32 `json:"bid"`
+	Ask             float32 `json:"ask"`
+	PreviousClose   float32 `json:"privious_close"`
 	Volume          string  `json:"volume"`
-	Turnover        string  `json:"turnover"`
-	PE              float32 `json:"pe"`
-	LotSize         int     `json:"lot_size"`
-	MarketCapital   string  `json:"market_capital"`
-	EPS             float32 `json:"eps"`
-	Yield           string  `json:"yield"`
-	Low52Weeks      float32 `json:"low_52_weeks"`
-	High52Weeks     float32 `json:"high_52_weeks"`
+
+	LotSize        int     `json:"lot_size"`
+	Turnover       string  `json:"turnover"`
+	PE             float32 `json:"pe"`
+	Yield          string  `json:"yield"`
+	DividendPayout string  `json:"dividend_payout"`
+	EPS            float32 `json:"eps"`
+	MarketCapital  string  `json:"market_capital"`
+	NetAssetValue  float32 `json:"net_asset_value"`
+	Low52Weeks     float32 `json:"low_52_weeks"`
+	High52Weeks    float32 `json:"high_52_weeks"`
 }
 
 func (quote EquityQuote) ToJSONString() string {
@@ -33,44 +64,37 @@ func (quote EquityQuote) ToJSONString() string {
 func Quote(symbol string) (EquityQuote, error) {
 	result := EquityQuote{}
 
-	urlStr := "http://www.aastocks.com/en/ltp/rtquote.aspx?symbol=" + symbol
+	urlStr := "http://www.aastocks.com/en/mobile/Quote.aspx?symbol=" + symbol
 
-	client := &http.Client{}
-	r, _ := http.NewRequest("GET", urlStr, nil) // URL-encoded payload
-	r.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-	r.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36")
-
-	resp, err := client.Do(r)
+	_, bodyString, err := util.HttpGetResponseContent(urlStr)
 	if err != nil {
 		return result, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		return result, errors.Errorf("Failed To Get Quote | Response Status Code: %v | Request: \n%s", resp.StatusCode, util.FormatRequest(r))
-	}
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return result, errors.Wrap(err, "Failed To Get Response Body")
-	}
-	bodyString := string(bodyBytes)
-
-	var re = regexp.MustCompile(`(?m)<table class="tb-c" cellspacing="1" cellpadding="1" width="357">[\s\S]*?<span class=.*?>([0-9.]+?)<[\s\S]*?<strong>([0-9.]+?) - ([0-9.]+?)</strong>[\s\S]*?([0-9.,KMB]+?)</strong>[\s\S]*?([0-9.,KMB]+?)</strong>[\s\S]*?([0-9.,KMB]+?)</strong>[\s\S]*?([0-9.,KMB]+?)</strong>[\s\S]*?([0-9.,KMB]+?)</strong>[\s\S]*?([0-9.,%KMB]+?)</strong>[\s\S]*?([0-9.,KMB]+?)</strong>[\s\S]*?<strong>[\s\S]*?([0-9.]+?) - ([0-9.]+?)</strong>`)
+	var re = regexp.MustCompile(`(?m)<div class="text_last"[\s\S]*?<span.*?>([0-9.]+?)<\/span>[\s\S]*?L\/H ([0-9.]+?)-([0-9.]+)[\s\S]*?Bid[\s\S]*?>([0-9.]+?)<[\s\S]*?Ask[\s\S]*?>([0-9.]+?)<[\s\S]*?>([0-9.]+?)<[\s\S]*?>([0-9.]+?)<[\s\S]*?>([0-9.KMB]+?)<[\s\S]*?>([0-9.]+?)<[\s\S]*?>([0-9.KMB]+?)<[\s\S]*?>([0-9.]+?)<[\s\S]*?>([0-9.%]+?)<[\s\S]*?>([0-9.%]+?)<[\s\S]*?>([0-9.]+?)<[\s\S]*?>([0-9.,KMB]+?)<[\s\S]*?>([0-9.]+?)<[\s\S]*?([0-9.]+?) - ([0-9.]+)[\s\S]*?stockid=([0-9A-Z.]+)`)
 	match := re.FindStringSubmatch(bodyString)
-	if len(match) != 13 {
+	if len(match) != 20 {
 		return result, errors.Errorf("Unable To Extract aastocks Quote: \n%s", bodyString)
 	}
 	result.LastTradedPrice = util.StringToFloat32(match[1])
 	result.Low = util.StringToFloat32(match[2])
 	result.High = util.StringToFloat32(match[3])
-	result.Volume = match[4]
-	result.MarketCapital = match[5]
-	result.Turnover = match[6]
-	result.EPS = util.StringToFloat32(match[7])
-	result.PE = util.StringToFloat32(match[8])
-	result.Yield = match[9]
-	result.LotSize = util.StringToInt(match[10])
-	result.Low52Weeks = util.StringToFloat32(match[11])
-	result.High52Weeks = util.StringToFloat32(match[12])
+	result.Bid = util.StringToFloat32(match[4])
+	result.Ask = util.StringToFloat32(match[5])
+	result.Open = util.StringToFloat32(match[6])
+	result.PreviousClose = util.StringToFloat32(match[7])
+	result.Volume = match[8]
+	result.LotSize = util.StringToInt(match[9])
+	result.Turnover = match[10]
+	result.PE = util.StringToFloat32(match[11])
+	result.Yield = match[12]
+	result.DividendPayout = match[13]
+	result.EPS = util.StringToFloat32(match[14])
+	result.MarketCapital = match[15]
+	result.NetAssetValue = util.StringToFloat32(match[16])
+	result.Low52Weeks = util.StringToFloat32(match[17])
+	result.High52Weeks = util.StringToFloat32(match[18])
+	result.Symbol = match[19]
 
 	return result, nil
 }

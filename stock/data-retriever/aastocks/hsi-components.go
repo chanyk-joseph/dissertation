@@ -1,8 +1,6 @@
 package aastocks
 
 import (
-	"io/ioutil"
-	"net/http"
 	"regexp"
 
 	"../common/util"
@@ -15,24 +13,10 @@ import (
 func GetHSIConstituentsCodes() ([]string, error) {
 	urlStr := "http://www.aastocks.com/en/stocks/market/index/hk-index-con.aspx"
 
-	client := &http.Client{}
-	r, _ := http.NewRequest("GET", urlStr, nil) // URL-encoded payload
-	r.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-	r.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36")
-
-	resp, err := client.Do(r)
+	_, bodyString, err := util.HttpGetResponseContent(urlStr)
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("Failed To Get HSI Constituents Codes | Response Status Code: %v | Request: \n%s", resp.StatusCode, util.FormatRequest(r))
-	}
-
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed To Get Response Body")
-	}
-	bodyString := string(bodyBytes)
 
 	var re = regexp.MustCompile(`(?m)detail-quote.aspx\?symbol=.*?>([0-9]{5}.HK)<\/a>`)
 	matches := re.FindAllStringSubmatch(bodyString, -1)
