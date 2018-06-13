@@ -76,7 +76,7 @@ func StringToInt(str string) int {
 	return value
 }
 
-func ObjectToJsonString(obj interface{}) string {
+func ObjectToJSONString(obj interface{}) string {
 	buf, err := json.MarshalIndent(obj, "", "	")
 	if err != nil {
 		panic(err)

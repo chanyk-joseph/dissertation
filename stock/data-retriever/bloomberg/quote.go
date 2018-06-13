@@ -8,36 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-/*
-Example JSON:
-{
-	"symbol": "700:HK",
-	"company_name": "Tencent Holdings Ltd",
-	"exchange": "Hong Kong",
-	"market_cap": "3.982T",
-	"currency": "HKD",
-	"previous_close": 415,
-	"open": 420,
-	"low": 415.6,
-	"high": 421,
-	"last_traded_price": 419,
-	"volume": 15480976,
-	"low_52_weeks": 260.4,
-	"high_52_weeks": 476.6,
-	"PE": 40.09,
-	"best_PE": 36.1544,
-	"best_PEG": 1.5491,
-	"shares_outstanding": "9.5B",
-	"price_to_book_ratio": 11.7053,
-	"price_to_sales_ratio": 12.3025,
-	"one_year_return": "51.37%",
-	"average_volume_30_days": 25278900,
-	"EPS": 8.53,
-	"best_EPS_in_current_year": 8.873,
-	"dividend": "0.21%",
-	"last_dividend_reported": 0.88
-}
-*/
 type EquityQuote struct {
 	Symbol      string `json:"symbol"`
 	CompanyName string `json:"company_name"`
@@ -71,7 +41,7 @@ type EquityQuote struct {
 }
 
 func (quote EquityQuote) ToJSONString() string {
-	return util.ObjectToJsonString(quote)
+	return util.ObjectToJSONString(quote)
 }
 
 // Quote return result from bloomberg
@@ -124,3 +94,35 @@ func Quote(symbol string) (EquityQuote, error) {
 
 	return result, nil
 }
+
+/*
+Example JSON:
+https://www.bloomberg.com/quote/700:HK
+{
+	"symbol": "700:HK",
+	"company_name": "Tencent Holdings Ltd",
+	"exchange": "Hong Kong",
+	"market_cap": "3.982T",
+	"currency": "HKD",
+	"previous_close": 415,
+	"open": 420,
+	"low": 415.6,
+	"high": 421,
+	"last_traded_price": 419,
+	"volume": 15480976,
+	"low_52_weeks": 260.4,
+	"high_52_weeks": 476.6,
+	"PE": 40.09,
+	"best_PE": 36.1544,
+	"best_PEG": 1.5491,
+	"shares_outstanding": "9.5B",
+	"price_to_book_ratio": 11.7053,
+	"price_to_sales_ratio": 12.3025,
+	"one_year_return": "51.37%",
+	"average_volume_30_days": 25278900,
+	"EPS": 8.53,
+	"best_EPS_in_current_year": 8.873,
+	"dividend": "0.21%",
+	"last_dividend_reported": 0.88
+}
+*/

@@ -6,6 +6,7 @@ import (
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/bloomberg"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/hkex"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/investtab"
 )
 
 func check(err error) {
@@ -37,5 +38,10 @@ func main() {
 			panic(err)
 		}
 		fmt.Println(result.ToJSONString())
+	}
+
+	{
+		investtab.GetInfo("00001:HK")
+		investtab.Test()
 	}
 }

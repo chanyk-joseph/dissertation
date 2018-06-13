@@ -7,30 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-/*
-Example JSON:
-{
-	"symbol": "00700.HK",
-	"last_traded_price": 419,
-	"open": 420,
-	"low": 415.6,
-	"high": 421,
-	"bid": 418.8,
-	"ask": 419,
-	"privious_close": 415,
-	"volume": "15.48M",
-	"lot_size": 100,
-	"turnover": "6.49B",
-	"pe": 46,
-	"yield": "0.21%",
-	"dividend_payout": "9.661%",
-	"eps": 9.109,
-	"market_capital": "3,982.05B",
-	"net_asset_value": 32.32,
-	"low_52_weeks": 260.4,
-	"high_52_weeks": 476.6
-}
-*/
 type EquityQuote struct {
 	Symbol string `json:"symbol"`
 
@@ -56,7 +32,7 @@ type EquityQuote struct {
 }
 
 func (quote EquityQuote) ToJSONString() string {
-	return util.ObjectToJsonString(quote)
+	return util.ObjectToJSONString(quote)
 }
 
 // Quote From aastocks (not working at this moment)
@@ -98,3 +74,29 @@ func Quote(symbol string) (EquityQuote, error) {
 
 	return result, nil
 }
+
+/*
+Example JSON:
+http://www.aastocks.com/en/mobile/Quote.aspx?symbol=00700.HK
+{
+	"symbol": "00700.HK",
+	"last_traded_price": 419,
+	"open": 420,
+	"low": 415.6,
+	"high": 421,
+	"bid": 418.8,
+	"ask": 419,
+	"privious_close": 415,
+	"volume": "15.48M",
+	"lot_size": 100,
+	"turnover": "6.49B",
+	"pe": 46,
+	"yield": "0.21%",
+	"dividend_payout": "9.661%",
+	"eps": 9.109,
+	"market_capital": "3,982.05B",
+	"net_asset_value": 32.32,
+	"low_52_weeks": 260.4,
+	"high_52_weeks": 476.6
+}
+*/

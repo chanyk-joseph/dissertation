@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
 type Director struct {
@@ -22,7 +24,7 @@ type ShareHolder struct {
 	Percentage string `json:"percentage"`
 }
 
-type CompanyBackground struct {
+type CompanyBackgroundInfo struct {
 	Symbol           string        `json:"symbol"`
 	UpdateTime       string        `json:"update_time"`
 	RawData          string        `json:"raw_data"`
@@ -44,37 +46,32 @@ type CompanyBackground struct {
 	IncorpPlace      *string       `json:"incorp_place"`
 }
 
-func (companyBackground *CompanyBackground) ToString() string {
-	buf, err := json.MarshalIndent(companyBackground, "", "	") //json.Marshal(companyBackground)
-	if err != nil {
-		panic(err)
-	}
-
-	return string(buf)
+func (companyInfo *CompanyBackgroundInfo) ToJSONString() string {
+	return util.ObjectToJSONString(companyInfo)
 }
 
 /*
-func (companyBackground *CompanyBackground) UnmarshalJSON(data []byte) error {
-	type Alias CompanyBackground
+func (companyInfo *CompanyBackgroundInfo) UnmarshalJSON(data []byte) error {
+	type Alias CompanyBackgroundInfo
 	aux := &struct {
 		Directors    string `json:"directors"`
 		ShareHolders string `json:"share_holders"`
 		Bankers      string `json:"bankers"`
 		*Alias
 	}{
-		Alias: (*Alias)(companyBackground),
+		Alias: (*Alias)(companyInfo),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	companyBackground.Directors = strings.Split(aux.Directors, "<br>")
-	companyBackground.ShareHolders = strings.Split(aux.ShareHolders, "<br>")
-	companyBackground.Bankers = strings.Split(aux.Bankers, "<br>")
+	companyInfo.Directors = strings.Split(aux.Directors, "<br>")
+	companyInfo.ShareHolders = strings.Split(aux.ShareHolders, "<br>")
+	companyInfo.Bankers = strings.Split(aux.Bankers, "<br>")
 	return nil
 }
 */
 
-func GetCompanyBackground(symbol string, useEng ...bool) (CompanyBackground, error) {
+func GetCompanyBackgroundInfo(symbol string, useEng ...bool) (CompanyBackgroundInfo, error) {
 	url := fmt.Sprintf("https://api.investtab.com/api/quote/%s/company-info?locale=zh_hk", symbol)
 	if len(useEng) > 0 && useEng[0] {
 		url = fmt.Sprintf("https://api.investtab.com/api/quote/%s/company-info?locale=en", symbol)
@@ -97,13 +94,13 @@ func GetCompanyBackground(symbol string, useEng ...bool) (CompanyBackground, err
 
 	fmt.Println("Trying: " + symbol)
 	response, _ := http.Get(url)
-	var companyBackground CompanyBackground
-	companyBackground.Symbol = symbol
-	companyBackground.UpdateTime = time.Now().UTC().String()
+	var companyInfo CompanyBackgroundInfo
+	companyInfo.Symbol = symbol
+	companyInfo.UpdateTime = time.Now().UTC().String()
 	if response.StatusCode == 200 && response.ContentLength > 0 {
 		buf, _ := ioutil.ReadAll(response.Body)
 
-		type Alias CompanyBackground
+		type Alias CompanyBackgroundInfo
 		aux := &struct {
 			Directors    string `json:"directors"`
 			ShareHolders string `json:"share_holders"`
@@ -111,11 +108,11 @@ func GetCompanyBackground(symbol string, useEng ...bool) (CompanyBackground, err
 			Solicitors   string `json:"solicitors"`
 			*Alias
 		}{
-			Alias: (*Alias)(&companyBackground),
+			Alias: (*Alias)(&companyInfo),
 		}
 		err := json.Unmarshal(buf, &aux)
-		companyBackground.Bankers = strings.Split(aux.Bankers, "<br>")
-		companyBackground.Solicitors = strings.Split(aux.Solicitors, "<br>")
+		companyInfo.Bankers = strings.Split(aux.Bankers, "<br>")
+		companyInfo.Solicitors = strings.Split(aux.Solicitors, "<br>")
 
 		var tempArr []string
 		tempArr = strings.Split(aux.Directors, "<br>")
@@ -126,7 +123,7 @@ func GetCompanyBackground(symbol string, useEng ...bool) (CompanyBackground, err
 					Name:  re.FindStringSubmatch(director)[1],
 					Title: re.FindStringSubmatch(director)[2],
 				}
-				companyBackground.Directors = append(companyBackground.Directors, dirObj)
+				companyInfo.Directors = append(companyInfo.Directors, dirObj)
 			}
 		}
 		tempArr = strings.Split(aux.ShareHolders, "<br>")
@@ -137,23 +134,23 @@ func GetCompanyBackground(symbol string, useEng ...bool) (CompanyBackground, err
 					Name:       re.FindStringSubmatch(shareHolder)[1],
 					Percentage: re.FindStringSubmatch(shareHolder)[2],
 				}
-				companyBackground.ShareHolders = append(companyBackground.ShareHolders, shareHolderObj)
+				companyInfo.ShareHolders = append(companyInfo.ShareHolders, shareHolderObj)
 			}
 		}
 
-		companyBackground.Bankers = nullStringArrIfEmpty(companyBackground.Bankers)
-		companyBackground.Solicitors = nullStringArrIfEmpty(companyBackground.Solicitors)
-		companyBackground.Chairman = nullStringIfEmpty(companyBackground.Chairman)
-		companyBackground.CompanySecretary = nullStringIfEmpty(companyBackground.CompanySecretary)
-		companyBackground.Auditors = nullStringIfEmpty(companyBackground.Auditors)
-		companyBackground.BusinessPlace = nullStringIfEmpty(companyBackground.BusinessPlace)
-		companyBackground.Website = nullStringIfEmpty(companyBackground.Website)
-		companyBackground.CompanyEmail = nullStringIfEmpty(companyBackground.CompanyEmail)
-		companyBackground.Tel = nullStringIfEmpty(companyBackground.Tel)
-		companyBackground.Fax = nullStringIfEmpty(companyBackground.Fax)
+		companyInfo.Bankers = nullStringArrIfEmpty(companyInfo.Bankers)
+		companyInfo.Solicitors = nullStringArrIfEmpty(companyInfo.Solicitors)
+		companyInfo.Chairman = nullStringIfEmpty(companyInfo.Chairman)
+		companyInfo.CompanySecretary = nullStringIfEmpty(companyInfo.CompanySecretary)
+		companyInfo.Auditors = nullStringIfEmpty(companyInfo.Auditors)
+		companyInfo.BusinessPlace = nullStringIfEmpty(companyInfo.BusinessPlace)
+		companyInfo.Website = nullStringIfEmpty(companyInfo.Website)
+		companyInfo.CompanyEmail = nullStringIfEmpty(companyInfo.CompanyEmail)
+		companyInfo.Tel = nullStringIfEmpty(companyInfo.Tel)
+		companyInfo.Fax = nullStringIfEmpty(companyInfo.Fax)
 
-		companyBackground.RawData = string(buf)
-		return companyBackground, err
+		companyInfo.RawData = string(buf)
+		return companyInfo, err
 	} else if response.StatusCode == 429 {
 		buf, _ := ioutil.ReadAll(response.Body)
 
@@ -164,13 +161,13 @@ func GetCompanyBackground(symbol string, useEng ...bool) (CompanyBackground, err
 		fmt.Println(symbol + " | " + string(buf) + " | Wait " + waitSecStr + "s")
 		time.Sleep(time.Duration(waitSec) * time.Second)
 
-		return GetCompanyBackground(symbol)
+		return GetCompanyBackgroundInfo(symbol)
 	} else {
-		return companyBackground, nil
+		return companyInfo, nil
 	}
 }
 
-func SortBySymbol(arr *[]CompanyBackground, ascending bool) {
+func SortBySymbol(arr *[]CompanyBackgroundInfo, ascending bool) {
 	sort.Slice(*arr, func(i, j int) bool {
 		s1 := (*arr)[i]
 		s2 := (*arr)[j]
@@ -186,14 +183,14 @@ func SortBySymbol(arr *[]CompanyBackground, ascending bool) {
 	})
 }
 
-func getAllCompanyBackgroundFromInvestTab() {
+func getAllCompanyBackgroundInfo() {
 	total := 99999
 	concurrency := 6
 	guard := make(chan int, concurrency)
 	throttle := time.Tick(time.Second / 6)
 	finished := make(chan int, total)
 
-	CompanyBackgrounds := make(chan CompanyBackground, total)
+	CompanyInfos := make(chan CompanyBackgroundInfo, total)
 	for i := 1; i <= total; i++ {
 		<-throttle
 		guard <- i
@@ -201,9 +198,9 @@ func getAllCompanyBackgroundFromInvestTab() {
 		go func(i int) {
 			symbol := fmt.Sprintf("%05d:HK", i)
 
-			companyBackground, err := GetCompanyBackground(symbol)
+			companyInfo, err := GetCompanyBackgroundInfo(symbol)
 			if err == nil {
-				CompanyBackgrounds <- companyBackground
+				CompanyInfos <- companyInfo
 			}
 
 			<-guard
@@ -216,14 +213,14 @@ func getAllCompanyBackgroundFromInvestTab() {
 	}
 	fmt.Println("Completed")
 
-	var temp []CompanyBackground
-	fmt.Println("Before: " + strconv.Itoa(len(temp)) + " | " + strconv.Itoa(len(CompanyBackgrounds)))
-	ciLen := len(CompanyBackgrounds)
+	var temp []CompanyBackgroundInfo
+	fmt.Println("Before: " + strconv.Itoa(len(temp)) + " | " + strconv.Itoa(len(CompanyInfos)))
+	ciLen := len(CompanyInfos)
 	for i := 0; i < ciLen; i++ {
-		ci := <-CompanyBackgrounds
+		ci := <-CompanyInfos
 		temp = append(temp, ci)
 	}
-	fmt.Println("After: " + strconv.Itoa(len(temp)) + " | " + strconv.Itoa(len(CompanyBackgrounds)))
+	fmt.Println("After: " + strconv.Itoa(len(temp)) + " | " + strconv.Itoa(len(CompanyInfos)))
 
 	sort.Slice(temp, func(i, j int) bool {
 		s1 := temp[i]
@@ -249,13 +246,13 @@ func getAllCompanyBackgroundFromInvestTab() {
 // // oldFormatToNew("C:/Users/Joseph/Desktop/playground/Stock_Info/test.json", "C:/Users/Joseph/Desktop/playground/Stock_Info/test_new.json")
 // buf, e := ioutil.ReadFile("C:/Users/Joseph/Desktop/playground/Stock_Info/test_new.json")
 // check(e)
-// var arr []tasks.CompanyBackground
+// var arr []tasks.CompanyBackgroundInfo
 // err := json.Unmarshal(buf, &arr)
 // check(err)
 
-// var arr2 []tasks.CompanyBackground
+// var arr2 []tasks.CompanyBackgroundInfo
 // for _, obj := range arr {
-// 	engObj, err := tasks.GetCompanyBackground(obj.Symbol, true)
+// 	engObj, err := tasks.GetCompanyInfo(obj.Symbol, true)
 // 	check(err)
 // 	arr2 = append(arr2, engObj)
 // }

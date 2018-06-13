@@ -17,7 +17,7 @@ type Stock struct {
 }
 
 func (stock Stock) ToJSONString() string {
-	return util.ObjectToJsonString(stock)
+	return util.ObjectToJSONString(stock)
 }
 
 func GetEquityList() ([]Stock, error) {
