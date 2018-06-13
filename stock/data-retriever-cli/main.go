@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"../data-retriever/aastocks"
-	"../data-retriever/bloomberg"
-	"../data-retriever/hkex"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/bloomberg"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/hkex"
 )
 
 func check(err error) {

@@ -3,7 +3,7 @@ package aastocks
 import (
 	"regexp"
 
-	"../common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 	"github.com/pkg/errors"
 )
 
