@@ -2,7 +2,6 @@ package investtab
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
@@ -44,8 +43,8 @@ type Info struct {
 	InstrumentClass string  `json:"instrument_class"`
 	TradingCurrency string  `json:"trading_currency"`
 	Exchange        string  `json:"exchange"`
-	BoardAmount     float32 `json:"board_amount"`
-	BoardLot        float32 `json:"board_lot"`
+	BoardAmount     float64 `json:"board_amount"`
+	BoardLot        float64 `json:"board_lot"`
 	ListingDate     string  `json:"listing_date"`
 	FinancialYear   struct {
 		Min int `json:"min"`
@@ -73,9 +72,6 @@ func GetInfo(symbol string) (Info, error) {
 	if err = json.Unmarshal([]byte(bodyStr), &result); err != nil {
 		return result, err
 	}
-
-	fmt.Println(result.ToJSONString())
-
 	return result, nil
 }
 

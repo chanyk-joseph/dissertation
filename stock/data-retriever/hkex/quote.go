@@ -2,8 +2,6 @@ package hkex
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
 	"regexp"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
@@ -18,7 +16,7 @@ type EquityQuote struct {
 	Symbol                string `json:"sym"`
 	ReutersInstrumentCode string `json:"ric"`
 
-	EPS               float32 `json:"eps"`
+	EPS               float64 `json:"eps"`
 	EPSCurrency       string  `json:"eps_ccy"`
 	PE                string  `json:"pe"`
 	DividendYield     string  `json:"div_yield"`
@@ -54,27 +52,14 @@ func Quote(symbol string) (EquityQuote, error) {
 	}
 	urlStr := "https://www1.hkex.com.hk/hkexwidget/data/getequityquote?sym=" + symbol + "&token=" + accessToken + "&lang=chi&qid=1528572605481&callback=jQuery311037427382333777826_1528572604782&_=1528572604783"
 
-	// fmt.Println(urlStr)
-
-	client := &http.Client{}
-	r, _ := http.NewRequest("GET", urlStr, nil) // URL-encoded payload
-	r.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-	r.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36")
-	r.Header.Add("Referer", "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities?sc_lang=zh-hk")
-
-	resp, err := client.Do(r)
+	r, bodyString, err := util.HttpGetResponseContentWithHeaders(urlStr, map[string]string{
+		"Accept":     "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36",
+		"Referer":    "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities?sc_lang=zh-hk",
+	})
 	if err != nil {
 		return result, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		return result, errors.Errorf("Failed To Get HKEX Access Token | %s | Response Status Code: %v", urlStr, resp.StatusCode)
-	}
-
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return result, errors.Wrap(err, "Failed To Get Response Body")
-	}
-	bodyString := string(bodyBytes)
 
 	re := regexp.MustCompile(`(?m)\(([\s\S]*?)\)$`)
 	match := re.FindStringSubmatch(bodyString)

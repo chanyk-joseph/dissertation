@@ -41,7 +41,22 @@ func main() {
 	}
 
 	{
-		investtab.GetInfo("00001:HK")
-		investtab.Test()
+		info, err := investtab.GetInfo("00700:HK")
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(info.ToJSONString())
+
+		result, err := investtab.Quote("00700:HK")
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(result.ToJSONString())
+
+		funds, err := investtab.GetFundamentals("00700:HK")
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(funds.ToJSONString())
 	}
 }

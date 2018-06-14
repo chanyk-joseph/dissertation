@@ -2,7 +2,6 @@ package investtab
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
@@ -11,94 +10,72 @@ type EquityQuote struct {
 	Symbol     string `json:"symbol"`
 	UpdateTime string `json:"as_of_date"`
 
-	Open  float32 `json:"open"`
-	Low   float32 `json:"low"`
-	High  float32 `json:"high"`
-	Close float32 `json:"close"`
+	Open  float64 `json:"open"`
+	Low   float64 `json:"low"`
+	High  float64 `json:"high"`
+	Close float64 `json:"close"`
 
-	Volume          float32  `json:"volume"`
-	VolumeAvg20Days *float32 `json:"volume_avg_20d"`
+	Volume          float64 `json:"volume"`
+	VolumeAvg20Days float64 `json:"volume_avg_20d"`
 
-	Low10Days   *float32 `json:"low_10d"`
-	Low250Days  *float32 `json:"low_250d"`
-	High10Days  *float32 `json:"high_10d"`
-	High250Days *float32 `json:"high_250d"`
+	Low10Days   float64 `json:"low_10d"`
+	Low250Days  float64 `json:"low_250d"`
+	High10Days  float64 `json:"high_10d"`
+	High250Days float64 `json:"high_250d"`
 
-	SMA10  *float32 `json:"sma10"`
-	SMA20  *float32 `json:"sma20"`
-	SMA50  *float32 `json:"sma50"`
-	SMA100 *float32 `json:"sma100"`
-	SMA250 *float32 `json:"sma250"`
+	SMA10  float64 `json:"sma10"`
+	SMA20  float64 `json:"sma20"`
+	SMA50  float64 `json:"sma50"`
+	SMA100 float64 `json:"sma100"`
+	SMA250 float64 `json:"sma250"`
 
-	BBandsLower float32 `json:"bbands_lower"`
-	BBandsUpper float32 `json:"bbands_upper"`
+	BBandsLower float64 `json:"bbands_lower"`
+	BBandsUpper float64 `json:"bbands_upper"`
 
-	DIMinus float32 `json:"di_minus"`
-	DIPlus  float32 `json:"di_plus"`
+	DIMinus float64 `json:"di_minus"`
+	DIPlus  float64 `json:"di_plus"`
 
-	MACD       float32 `json:"macd"`
-	MACDSignal float32 `json:"macd_signal"`
-	MACDHist   float32 `json:"macd_hist"`
+	MACD       float64 `json:"macd"`
+	MACDSignal float64 `json:"macd_signal"`
+	MACDHist   float64 `json:"macd_hist"`
 
-	StcK float32 `json:"stc_k"`
-	StcD float32 `json:"stc_d"`
+	StcK float64 `json:"stc_k"`
+	StcD float64 `json:"stc_d"`
 
-	ADX float32 `json:"adx"`
-	RSI float32 `json:"rsi"`
+	ADX float64 `json:"adx"`
+	RSI float64 `json:"rsi"`
 
-	PricesGap *float32 `json:"prices_gap"`
+	PricesGap float64 `json:"prices_gap"`
 
-	ChangeFromOpen             float32  `json:"change_from_open"`
-	ChangeFromOpenPCT          float32  `json:"change_from_open_pct"`
-	ChangeFromPreviousClose    *float32 `json:"change_from_prev_close"`
-	ChangeFromPreviousClosePCT *float32 `json:"change_from_prev_close_pct"`
+	ChangeFromOpen             float64 `json:"change_from_open"`
+	ChangeFromOpenPCT          float64 `json:"change_from_open_pct"`
+	ChangeFromPreviousClose    float64 `json:"change_from_prev_close"`
+	ChangeFromPreviousClosePCT float64 `json:"change_from_prev_close_pct"`
 }
 
 func (quote EquityQuote) ToJSONString() string {
 	return util.ObjectToJSONString(quote)
 }
 
-func Test() {
-	str := `{
-		"low_10d": 115.4,
-		"sma100": 135.247,
-		"as_of_date": "2018-06-13T00:00:00",
-		"sma250": 133.141,
-		"close": 121.6,
-		"open": 125.0,
-		"bbands_upper": 131.6314,
-		"di_plus": 28.6915,
-		"adx": 17.0233,
-		"prices_gap": null,
-		"low": 120.4,
-		"bbands_lower": 108.1486,
-		"sma20": 119.89,
-		"change_from_open_pct": -2.72,
-		"volume_avg_20d": 7534124.0,
-		"high_10d": 134.6,
-		"rsi": 49.1626,
-		"symbol": "02018:HK",
-		"volume": 8945350.0,
-		"macd": 1.2892,
-		"high_250d": 185.0,
-		"macd_signal": 0.0695,
-		"macd_hist": 1.2197,
-		"di_minus": 25.8411,
-		"high": 125.5,
-		"sma10": 124.09,
-		"change_from_open": -3.4,
-		"sma50": 123.604,
-		"low_250d": 94.05,
-		"stc_k": 59.4395,
-		"stc_d": 67.1019,
-		"change_from_prev_close_pct": -4.1009,
-		"change_from_prev_close": -5.2
-	}`
+func Quote(symbol string) (EquityQuote, error) {
 	var result EquityQuote
-	if err := json.Unmarshal([]byte(str), &result); err != nil {
-		panic(err)
+
+	urlStr := "https://api.investtab.com/api/quote/" + symbol + "/technical"
+	headers := map[string]string{
+		"Accept":  "application/json, text/plain, */*",
+		"Referer": "https://www.investtab.com/en/filter",
 	}
-	fmt.Println(result.ToJSONString())
+	_, bodyStr, err := util.HttpGetResponseContentWithHeaders(urlStr, headers)
+	if err != nil {
+		return result, err
+	}
+
+	err = json.Unmarshal([]byte(bodyStr), &result)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
 
 /*

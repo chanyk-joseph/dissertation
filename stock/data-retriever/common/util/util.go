@@ -12,10 +12,19 @@ import (
 )
 
 func HttpGetResponseContent(urlStr string) (*http.Request, string, error) {
+	headers := map[string]string{
+		"Accept":     "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36",
+	}
+	return HttpGetResponseContentWithHeaders(urlStr, headers)
+}
+
+func HttpGetResponseContentWithHeaders(urlStr string, headers map[string]string) (*http.Request, string, error) {
 	client := &http.Client{}
 	r, _ := http.NewRequest("GET", urlStr, nil) // URL-encoded payload
-	r.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-	r.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36")
+	for k, v := range headers {
+		r.Header.Add(k, v)
+	}
 
 	resp, err := client.Do(r)
 	if err != nil {
@@ -66,6 +75,14 @@ func StringToFloat32(str string) float32 {
 		panic(err)
 	}
 	return float32(value)
+}
+
+func StringToFloat64(str string) float64 {
+	value, err := strconv.ParseFloat(str, 64)
+	if err != nil {
+		panic(err)
+	}
+	return value
 }
 
 func StringToInt(str string) int {

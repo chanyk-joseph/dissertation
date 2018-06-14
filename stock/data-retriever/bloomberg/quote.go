@@ -15,29 +15,29 @@ type EquityQuote struct {
 	MarketCap   string `json:"market_cap"`
 	Currency    string `json:"currency"`
 
-	PreviousClose   float32 `json:"previous_close"`
-	Open            float32 `json:"open"`
-	Low             float32 `json:"low"`
-	High            float32 `json:"high"`
-	LastTradedPrice float32 `json:"last_traded_price"`
+	PreviousClose   float64 `json:"previous_close"`
+	Open            float64 `json:"open"`
+	Low             float64 `json:"low"`
+	High            float64 `json:"high"`
+	LastTradedPrice float64 `json:"last_traded_price"`
 	Volume          int     `json:"volume"`
 
-	Low52Weeks  float32 `json:"low_52_weeks"`
-	High52Weeks float32 `json:"high_52_weeks"`
+	Low52Weeks  float64 `json:"low_52_weeks"`
+	High52Weeks float64 `json:"high_52_weeks"`
 
-	PE                float32 `json:"PE"`
-	BestPE            float32 `json:"best_PE"`
-	BestPEG           float32 `json:"best_PEG"`
+	PE                float64 `json:"PE"`
+	BestPE            float64 `json:"best_PE"`
+	BestPEG           float64 `json:"best_PEG"`
 	SharesOutstanding string  `json:"shares_outstanding"`
-	PriceToBookRatio  float32 `json:"price_to_book_ratio"`
-	PriceToSalesRatio float32 `json:"price_to_sales_ratio"`
+	PriceToBookRatio  float64 `json:"price_to_book_ratio"`
+	PriceToSalesRatio float64 `json:"price_to_sales_ratio"`
 
 	OneYearReturn        string  `json:"one_year_return"`
 	AverageVolume30Days  int     `json:"average_volume_30_days"`
-	EPS                  float32 `json:"EPS"`
-	BestEPSInCurrentYear float32 `json:"best_EPS_in_current_year"`
+	EPS                  float64 `json:"EPS"`
+	BestEPSInCurrentYear float64 `json:"best_EPS_in_current_year"`
 	Dividend             string  `json:"dividend"`
-	LastDividendReported float32 `json:"last_dividend_reported"`
+	LastDividendReported float64 `json:"last_dividend_reported"`
 }
 
 func (quote EquityQuote) ToJSONString() string {
@@ -63,34 +63,34 @@ func Quote(symbol string) (EquityQuote, error) {
 	result.Symbol = match[1]
 	result.Exchange = match[2]
 	result.CompanyName = match[3]
-	result.LastTradedPrice = util.StringToFloat32(match[4])
+	result.LastTradedPrice = util.StringToFloat64(match[4])
 	result.Currency = match[5]
-	result.Open = util.StringToFloat32(match[6])
-	result.PreviousClose = util.StringToFloat32(match[7])
+	result.Open = util.StringToFloat64(match[6])
+	result.PreviousClose = util.StringToFloat64(match[7])
 	result.Volume = util.StringToInt(strings.Replace(match[8], ",", "", -1))
 	result.MarketCap = match[9]
-	result.Low = util.StringToFloat32(match[10])
-	result.High = util.StringToFloat32(match[11])
-	result.Low52Weeks = util.StringToFloat32(match[12])
-	result.High52Weeks = util.StringToFloat32(match[13])
+	result.Low = util.StringToFloat64(match[10])
+	result.High = util.StringToFloat64(match[11])
+	result.Low52Weeks = util.StringToFloat64(match[12])
+	result.High52Weeks = util.StringToFloat64(match[13])
 
 	re = regexp.MustCompile(`(?m)<span>P/E Ratio<\/span>.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<`)
 	match = re.FindStringSubmatch(bodyString)
 	if len(match) != 13 {
 		return result, errors.Errorf("Unable To Extract Bloomberg Quote: \n%s", bodyString)
 	}
-	result.PE = util.StringToFloat32(match[1])
-	result.BestPE = util.StringToFloat32(match[2])
-	result.BestPEG = util.StringToFloat32(match[3])
+	result.PE = util.StringToFloat64(match[1])
+	result.BestPE = util.StringToFloat64(match[2])
+	result.BestPEG = util.StringToFloat64(match[3])
 	result.SharesOutstanding = match[4]
-	result.PriceToBookRatio = util.StringToFloat32(match[5])
-	result.PriceToSalesRatio = util.StringToFloat32(match[6])
+	result.PriceToBookRatio = util.StringToFloat64(match[5])
+	result.PriceToSalesRatio = util.StringToFloat64(match[6])
 	result.OneYearReturn = match[7]
 	result.AverageVolume30Days = util.StringToInt(strings.Replace(match[8], ",", "", -1))
-	result.EPS = util.StringToFloat32(match[9])
-	result.BestEPSInCurrentYear = util.StringToFloat32(match[10])
+	result.EPS = util.StringToFloat64(match[9])
+	result.BestEPSInCurrentYear = util.StringToFloat64(match[10])
 	result.Dividend = match[11]
-	result.LastDividendReported = util.StringToFloat32(match[12])
+	result.LastDividendReported = util.StringToFloat64(match[12])
 
 	return result, nil
 }
