@@ -93,6 +93,14 @@ func StringToInt(str string) int {
 	return value
 }
 
+func StringToInt64(str string) int64 {
+	value, err := strconv.ParseInt(str, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return value
+}
+
 func ObjectToJSONString(obj interface{}) string {
 	buf, err := json.MarshalIndent(obj, "", "	")
 	if err != nil {

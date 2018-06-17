@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 	"github.com/gocolly/colly"
 	"github.com/oliveagle/jsonpath"
 )
@@ -68,27 +68,17 @@ func GetPriceRecords(symbol string, startTime time.Time, endTime time.Time) ([]P
 				continue
 			}
 
-			toFloat := func(str string) float64 {
-				tmp, err := strconv.ParseFloat(str, 64)
-				if err != nil {
-					panic(err)
-				}
-				return tmp
-			}
-
 			var err error
 			priceRecord := PriceRecord{}
 			if priceRecord.Date, err = time.Parse(time.RFC3339, rowData[0]+"T00:00:00.000Z"); err != nil {
 				panic(err)
 			}
-			priceRecord.Open = toFloat(rowData[1])
-			priceRecord.High = toFloat(rowData[2])
-			priceRecord.Low = toFloat(rowData[3])
-			priceRecord.Close = toFloat(rowData[4])
-			priceRecord.AdjustedClose = toFloat(rowData[5])
-			if priceRecord.Volume, err = strconv.ParseInt(rowData[6], 10, 64); err != nil {
-				panic(err)
-			}
+			priceRecord.Open = util.StringToFloat64(rowData[1])
+			priceRecord.High = util.StringToFloat64(rowData[2])
+			priceRecord.Low = util.StringToFloat64(rowData[3])
+			priceRecord.Close = util.StringToFloat64(rowData[4])
+			priceRecord.AdjustedClose = util.StringToFloat64(rowData[5])
+			priceRecord.Volume = util.StringToInt64(rowData[6])
 
 			result = append(result, priceRecord)
 		}
