@@ -99,7 +99,7 @@ func GetPriceRecords(symbol string, startTime time.Time, endTime time.Time) ([]P
 	c.Visit(urlStr)
 
 	if len(result) == 0 {
-		return result, errors.New("Unable To Get History Stock Price Of " + symbol)
+		return result, errors.New("Unable To Get Stock Price History For " + symbol)
 	}
 
 	return result, nil
