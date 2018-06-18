@@ -2,7 +2,9 @@ package investtab
 
 import (
 	"encoding/json"
+	"strings"
 
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
@@ -61,8 +63,9 @@ func (info Info) ToJSONString() string {
 	return util.ObjectToJSONString(info)
 }
 
-func GetInfo(symbol string) (Info, error) {
+func GetInfo(standardSymbol converter.StandardSymbol) (Info, error) {
 	var result Info
+	symbol := strings.Replace(standardSymbol.Symbol, ".", ":", -1)
 
 	urlStr := "https://api.investtab.com/api/quote/" + symbol + "/info"
 	_, bodyStr, err := util.HttpGetResponseContent(urlStr)

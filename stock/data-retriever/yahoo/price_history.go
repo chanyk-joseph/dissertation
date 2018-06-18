@@ -9,25 +9,36 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 	"github.com/gocolly/colly"
 	"github.com/oliveagle/jsonpath"
 )
 
 type PriceRecord struct {
-	Date          time.Time
-	Open          float64
-	High          float64
-	Low           float64
-	Close         float64
-	AdjustedClose float64
-	Volume        int64
+	Date          time.Time `json:"date"`
+	Open          float64   `json:"open"`
+	High          float64   `json:"high"`
+	Low           float64   `json:"low"`
+	Close         float64   `json:"close"`
+	AdjustedClose float64   `json:"adjusted_close"`
+	Volume        int64     `json:"volume"`
 }
 
-func GetPriceRecords(symbol string, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
-	result := []PriceRecord{}
+func (p *PriceRecord) MarshalJSON() ([]byte, error) {
+	type Alias PriceRecord
+	return json.Marshal(&struct {
+		*Alias
+		Date string `json:"date"`
+	}{
+		Alias: (*Alias)(p),
+		Date:  p.Date.Format("2006-01-02"),
+	})
+}
 
-	// Symbol Example: 0001.HK
+func GetPriceRecords(standardSymbol converter.StandardSymbol, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
+	result := []PriceRecord{}
+	symbol := standardSymbol.Symbol[1:]
 
 	c := colly.NewCollector()
 	detailCollector := c.Clone()
@@ -52,7 +63,6 @@ func GetPriceRecords(symbol string, startTime time.Time, endTime time.Time) ([]P
 		accessToken := res.(string)
 
 		urlStr := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/download/%s?period1=%d&period2=%d&interval=1d&events=history&crumb=%s", symbol, startTime.Unix(), endTime.Unix(), accessToken)
-		fmt.Println(urlStr)
 		detailCollector.Visit(urlStr)
 	})
 
@@ -85,7 +95,6 @@ func GetPriceRecords(symbol string, startTime time.Time, endTime time.Time) ([]P
 	})
 
 	urlStr := fmt.Sprintf("https://finance.yahoo.com/quote/%s/history?period1=%d&period2=%d&interval=1d&filter=history&frequency=1d", symbol, startTime.Unix(), endTime.Unix())
-	fmt.Println(urlStr)
 	c.Visit(urlStr)
 
 	if len(result) == 0 {

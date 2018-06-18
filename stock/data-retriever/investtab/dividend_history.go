@@ -2,7 +2,9 @@ package investtab
 
 import (
 	"encoding/json"
+	"strings"
 
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
@@ -33,8 +35,9 @@ func (dividendRecord DividendRecord) ToJSONString() string {
 	return util.ObjectToJSONString(dividendRecord)
 }
 
-func GetDividendRecords(symbol string) ([]DividendRecord, error) {
+func GetDividendRecords(standardSymbol converter.StandardSymbol) ([]DividendRecord, error) {
 	result := []DividendRecord{}
+	symbol := strings.Replace(standardSymbol.Symbol, ".", ":", -1)
 
 	urlStr := "https://api.investtab.com/api/quote/" + symbol + "/dividend-history"
 	_, bodyStr, err := util.HttpGetResponseContent(urlStr)

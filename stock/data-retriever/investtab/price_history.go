@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
 type PriceRecord struct {
-	MDEntryTimeInMS int64 `json:"mdEntryTime"`
-	MDEntryTime     time.Time
+	MDEntryTimeInMS int64     `json:"mdEntryTime"`
+	Date            time.Time `json:"date"`
 
 	FirstPrice        string `json:"firstPx"`
 	LowPrice          string `json:"lowPx"`
@@ -23,14 +24,14 @@ func (priceRecord PriceRecord) ToJSONString() string {
 	return util.ObjectToJSONString(priceRecord)
 }
 
-func GetPriceRecords(symbol string, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
+func GetPriceRecords(standardSymbol converter.StandardSymbol, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
 	result := []PriceRecord{}
+	symbol := standardSymbol.Symbol[:len(standardSymbol.Symbol)-3]
 
 	startTimeStr := fmt.Sprintf("%d%02d%02d", startTime.Year(), startTime.Month(), startTime.Day())
 	endTimeStr := fmt.Sprintf("%d%02d%02d", endTime.Year(), endTime.Month(), endTime.Day())
 	urlStr := fmt.Sprintf("https://api.investtab.com/api/quote/trubuzz/histories/date-range?country=HK&exchange=HKSE&symbol=%s&period=d1&begin=%s&end=%s", symbol, startTimeStr, endTimeStr)
 
-	fmt.Println(urlStr)
 	headers := map[string]string{
 		"Authorization": "Basic ZmFrZUBnbWFpbC5jb206dGVzdGFwaQ==",
 	}
@@ -42,8 +43,9 @@ func GetPriceRecords(symbol string, startTime time.Time, endTime time.Time) ([]P
 		return result, err
 	}
 
-	for _, record := range result {
-		record.MDEntryTime = time.Unix(0, record.MDEntryTimeInMS*int64(time.Millisecond))
+	for i := range result {
+		record := &result[i]
+		record.Date = time.Unix(record.MDEntryTimeInMS/1000, 0)
 	}
 
 	return result, nil
