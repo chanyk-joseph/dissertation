@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/pkg/errors"
 )
 
@@ -42,7 +42,7 @@ type EquityQuote struct {
 }
 
 func (quote EquityQuote) ToJSONString() string {
-	return util.ObjectToJSONString(quote)
+	return utils.ObjectToJSONString(quote)
 }
 
 // Quote return result from bloomberg
@@ -50,14 +50,14 @@ func (quote EquityQuote) ToJSONString() string {
 func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	result := EquityQuote{}
 
-	code, err := util.ExtractStockCode(standardSymbol.Symbol)
+	code, err := utils.ExtractStockCode(standardSymbol.Symbol)
 	if err != nil {
 		return result, err
 	}
 	symbol := code + ":HK"
 	urlStr := "https://www.bloomberg.com/quote/" + symbol
 
-	_, bodyString, err := util.HttpGetResponseContent(urlStr)
+	_, bodyString, err := utils.HttpGetResponseContent(urlStr)
 	if err != nil {
 		return result, err
 	}
@@ -74,7 +74,7 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	result.Currency = match[5]
 	result.Open = toFloat64OrZero(match[6])
 	result.PreviousClose = toFloat64OrZero(match[7])
-	result.Volume = util.StringToInt(strings.Replace(match[8], ",", "", -1))
+	result.Volume = utils.StringToInt(strings.Replace(match[8], ",", "", -1))
 	result.MarketCap = match[9]
 	result.Low = toFloat64OrZero(match[10])
 	result.High = toFloat64OrZero(match[11])
@@ -93,7 +93,7 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	result.PriceToBookRatio = toFloat64OrZero(match[5])
 	result.PriceToSalesRatio = toFloat64OrZero(match[6])
 	result.OneYearReturn = match[7]
-	result.AverageVolume30Days = util.StringToInt(strings.Replace(match[8], ",", "", -1))
+	result.AverageVolume30Days = utils.StringToInt(strings.Replace(match[8], ",", "", -1))
 	result.EPS = toFloat64OrZero(match[9])
 	result.BestEPSInCurrentYear = toFloat64OrZero(match[10])
 	result.Dividend = match[11]
@@ -110,7 +110,7 @@ func toFloat64OrZero(str string) (result float64) {
 		}
 	}()
 
-	return util.StringToFloat64(str)
+	return utils.StringToFloat64(str)
 }
 
 /*

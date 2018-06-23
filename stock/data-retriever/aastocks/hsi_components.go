@@ -4,8 +4,8 @@ import (
 	"regexp"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 	"github.com/pkg/errors"
 )
 
@@ -15,7 +15,7 @@ import (
 func GetHSIConstituentsCodes() ([]models.StandardSymbol, error) {
 	urlStr := "http://www.aastocks.com/en/stocks/market/index/hk-index-con.aspx"
 
-	_, bodyString, err := util.HttpGetResponseContent(urlStr)
+	_, bodyString, err := utils.HttpGetResponseContent(urlStr)
 	if err != nil {
 		return nil, err
 	}

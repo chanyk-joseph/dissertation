@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 )
 
 type EquityQuote struct {
@@ -56,7 +56,7 @@ type EquityQuote struct {
 }
 
 func (quote EquityQuote) ToJSONString() string {
-	return util.ObjectToJSONString(quote)
+	return utils.ObjectToJSONString(quote)
 }
 
 func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
@@ -68,7 +68,7 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 		"Accept":  "application/json, text/plain, */*",
 		"Referer": "https://www.investtab.com/en/filter",
 	}
-	_, bodyStr, err := util.HttpGetResponseContentWithHeaders(urlStr, headers)
+	_, bodyStr, err := utils.HttpGetResponseContentWithHeaders(urlStr, headers)
 	if err != nil {
 		return result, err
 	}

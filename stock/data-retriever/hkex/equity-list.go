@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +17,7 @@ type Stock struct {
 }
 
 func (stock Stock) ToJSONString() string {
-	return util.ObjectToJSONString(stock)
+	return utils.ObjectToJSONString(stock)
 }
 
 func GetEquityList() ([]Stock, error) {

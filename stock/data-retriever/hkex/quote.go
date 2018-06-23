@@ -5,7 +5,7 @@ import (
 	"regexp"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/pkg/errors"
 )
 
@@ -32,8 +32,8 @@ type EquityQuote struct {
 	High52Weeks     string `json:"hi52"`
 	Low52Weeks      string `json:"lo52"`
 
-	TurnOver     string `json:"am"`
-	TurnOverUnit string `json:"am_u"`
+	Turnover     string `json:"am"`
+	TurnoverUnit string `json:"am_u"`
 	Volume       string `json:"vo"`
 	VolumeUnit   string `json:"vo_u"`
 	Bid          string `json:"bd"`
@@ -41,13 +41,13 @@ type EquityQuote struct {
 }
 
 func (quote EquityQuote) ToJSONString() string {
-	return util.ObjectToJSONString(quote)
+	return utils.ObjectToJSONString(quote)
 }
 
 func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	result := EquityQuote{}
 
-	symbol, err := util.ExtractStockCode(standardSymbol.Symbol)
+	symbol, err := utils.ExtractStockCode(standardSymbol.Symbol)
 	if err != nil {
 		return result, err
 	}
@@ -58,7 +58,7 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	}
 	urlStr := "https://www1.hkex.com.hk/hkexwidget/data/getequityquote?sym=" + symbol + "&token=" + accessToken + "&lang=chi&qid=1528572605481&callback=jQuery311037427382333777826_1528572604782&_=1528572604783"
 
-	r, bodyString, err := util.HttpGetResponseContentWithHeaders(urlStr, map[string]string{
+	r, bodyString, err := utils.HttpGetResponseContentWithHeaders(urlStr, map[string]string{
 		"Accept":     "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
 		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.79 Safari/537.36",
 		"Referer":    "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities?sc_lang=zh-hk",
@@ -85,8 +85,8 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 		return result, err
 	}
 
-	if quoteResp.Data.Quote.CompanyName == "" {
-		return result, errors.Errorf("Unexpected Response From HKEX\nRequest:\n%s\nResponse:\n%s", util.FormatRequest(r), jsonStr)
+	if quoteResp.Data.Quote.CompanyName == "" || quoteResp.Data.Quote.Open == "" {
+		return result, errors.Errorf("Unexpected Response From HKEX\nRequest:\n%s\nResponse:\n%s", utils.FormatRequest(r), jsonStr)
 	}
 
 	result = quoteResp.Data.Quote

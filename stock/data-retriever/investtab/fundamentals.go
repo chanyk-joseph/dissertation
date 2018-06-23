@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 )
 
 type Fundamentals struct {
@@ -36,7 +36,7 @@ type Fundamentals struct {
 }
 
 func (fundamentals Fundamentals) ToJSONString() string {
-	return util.ObjectToJSONString(fundamentals)
+	return utils.ObjectToJSONString(fundamentals)
 }
 func GetFundamentals(standardSymbol models.StandardSymbol) (Fundamentals, error) {
 	var result Fundamentals
@@ -47,7 +47,7 @@ func GetFundamentals(standardSymbol models.StandardSymbol) (Fundamentals, error)
 		"Accept":  "application/json, text/plain, */*",
 		"Referer": "https://www.investtab.com/en/filter",
 	}
-	_, bodyStr, err := util.HttpGetResponseContentWithHeaders(urlStr, headers)
+	_, bodyStr, err := utils.HttpGetResponseContentWithHeaders(urlStr, headers)
 	if err != nil {
 		return result, err
 	}

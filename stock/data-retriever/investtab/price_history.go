@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 )
 
 type PriceRecord struct {
@@ -21,7 +21,7 @@ type PriceRecord struct {
 }
 
 func (priceRecord PriceRecord) ToJSONString() string {
-	return util.ObjectToJSONString(priceRecord)
+	return utils.ObjectToJSONString(priceRecord)
 }
 
 func GetPriceRecords(standardSymbol models.StandardSymbol, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
@@ -35,7 +35,7 @@ func GetPriceRecords(standardSymbol models.StandardSymbol, startTime time.Time, 
 	headers := map[string]string{
 		"Authorization": "Basic ZmFrZUBnbWFpbC5jb206dGVzdGFwaQ==",
 	}
-	_, bodyStr, err := util.HttpGetResponseContentWithHeaders(urlStr, headers)
+	_, bodyStr, err := utils.HttpGetResponseContentWithHeaders(urlStr, headers)
 	if err != nil {
 		return result, err
 	}

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 )
 
 type Name struct {
@@ -60,7 +60,7 @@ type Info struct {
 }
 
 func (info Info) ToJSONString() string {
-	return util.ObjectToJSONString(info)
+	return utils.ObjectToJSONString(info)
 }
 
 func GetInfo(standardSymbol models.StandardSymbol) (Info, error) {
@@ -68,7 +68,7 @@ func GetInfo(standardSymbol models.StandardSymbol) (Info, error) {
 	symbol := strings.Replace(standardSymbol.Symbol, ".", ":", -1)
 
 	urlStr := "https://api.investtab.com/api/quote/" + symbol + "/info"
-	_, bodyStr, err := util.HttpGetResponseContent(urlStr)
+	_, bodyStr, err := utils.HttpGetResponseContent(urlStr)
 	if err != nil {
 		return result, err
 	}

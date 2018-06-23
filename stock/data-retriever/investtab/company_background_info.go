@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 )
 
 type Director struct {
@@ -48,7 +48,7 @@ type CompanyBackgroundInfo struct {
 }
 
 func (companyInfo *CompanyBackgroundInfo) ToJSONString() string {
-	return util.ObjectToJSONString(companyInfo)
+	return utils.ObjectToJSONString(companyInfo)
 }
 
 /*
@@ -200,7 +200,7 @@ func getAllCompanyBackgroundInfo() {
 		go func(i int) {
 			symbol := fmt.Sprintf("%05d:HK", i)
 
-			companyInfo, err := GetCompanyBackgroundInfo(util.NewStandardSymbol(symbol))
+			companyInfo, err := GetCompanyBackgroundInfo(utils.NewStandardSymbol(symbol))
 			if err == nil {
 				CompanyInfos <- companyInfo
 			}

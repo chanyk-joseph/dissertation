@@ -4,7 +4,7 @@ import (
 	"regexp"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/pkg/errors"
 )
 
@@ -33,7 +33,7 @@ type EquityQuote struct {
 }
 
 func (quote EquityQuote) ToJSONString() string {
-	return util.ObjectToJSONString(quote)
+	return utils.ObjectToJSONString(quote)
 }
 
 // Quote From aastocks (not working at this moment)
@@ -44,7 +44,7 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	symbol := standardSymbol.Symbol[:len(standardSymbol.Symbol)-3]
 	urlStr := "http://www.aastocks.com/en/mobile/Quote.aspx?symbol=" + symbol
 
-	_, bodyString, err := util.HttpGetResponseContent(urlStr)
+	_, bodyString, err := utils.HttpGetResponseContent(urlStr)
 	if err != nil {
 		return result, err
 	}
@@ -54,24 +54,24 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	if len(match) != 20 {
 		return result, errors.Errorf("Unable To Extract aastocks Quote: \n%s", bodyString)
 	}
-	result.LastTradedPrice = util.StringToFloat64(match[1])
-	result.Low = util.StringToFloat64(match[2])
-	result.High = util.StringToFloat64(match[3])
-	result.Bid = util.StringToFloat64(match[4])
-	result.Ask = util.StringToFloat64(match[5])
-	result.Open = util.StringToFloat64(match[6])
-	result.PreviousClose = util.StringToFloat64(match[7])
+	result.LastTradedPrice = utils.StringToFloat64(match[1])
+	result.Low = utils.StringToFloat64(match[2])
+	result.High = utils.StringToFloat64(match[3])
+	result.Bid = utils.StringToFloat64(match[4])
+	result.Ask = utils.StringToFloat64(match[5])
+	result.Open = utils.StringToFloat64(match[6])
+	result.PreviousClose = utils.StringToFloat64(match[7])
 	result.Volume = match[8]
-	result.LotSize = util.StringToInt(match[9])
+	result.LotSize = utils.StringToInt(match[9])
 	result.Turnover = match[10]
-	result.PE = util.StringToFloat64(match[11])
+	result.PE = utils.StringToFloat64(match[11])
 	result.Yield = match[12]
 	result.DividendPayout = match[13]
-	result.EPS = util.StringToFloat64(match[14])
+	result.EPS = utils.StringToFloat64(match[14])
 	result.MarketCapital = match[15]
-	result.NetAssetValue = util.StringToFloat64(match[16])
-	result.Low52Weeks = util.StringToFloat64(match[17])
-	result.High52Weeks = util.StringToFloat64(match[18])
+	result.NetAssetValue = utils.StringToFloat64(match[16])
+	result.Low52Weeks = utils.StringToFloat64(match[17])
+	result.High52Weeks = utils.StringToFloat64(match[18])
 	result.Symbol = match[19]
 
 	return result, nil

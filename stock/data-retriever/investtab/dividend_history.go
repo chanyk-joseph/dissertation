@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 )
 
 type DividendRecord struct {
@@ -32,7 +32,7 @@ type PeriodLoc struct {
 }
 
 func (dividendRecord DividendRecord) ToJSONString() string {
-	return util.ObjectToJSONString(dividendRecord)
+	return utils.ObjectToJSONString(dividendRecord)
 }
 
 func GetDividendRecords(standardSymbol models.StandardSymbol) ([]DividendRecord, error) {
@@ -40,7 +40,7 @@ func GetDividendRecords(standardSymbol models.StandardSymbol) ([]DividendRecord,
 	symbol := strings.Replace(standardSymbol.Symbol, ".", ":", -1)
 
 	urlStr := "https://api.investtab.com/api/quote/" + symbol + "/dividend-history"
-	_, bodyStr, err := util.HttpGetResponseContent(urlStr)
+	_, bodyStr, err := utils.HttpGetResponseContent(urlStr)
 	if err != nil {
 		return result, err
 	}

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/gocolly/colly"
 	"github.com/oliveagle/jsonpath"
 )
@@ -83,12 +83,12 @@ func GetPriceRecords(standardSymbol models.StandardSymbol, startTime time.Time, 
 			if priceRecord.Date, err = time.Parse(time.RFC3339, rowData[0]+"T00:00:00.000Z"); err != nil {
 				panic(err)
 			}
-			priceRecord.Open = util.StringToFloat64(rowData[1])
-			priceRecord.High = util.StringToFloat64(rowData[2])
-			priceRecord.Low = util.StringToFloat64(rowData[3])
-			priceRecord.Close = util.StringToFloat64(rowData[4])
-			priceRecord.AdjustedClose = util.StringToFloat64(rowData[5])
-			priceRecord.Volume = util.StringToInt64(rowData[6])
+			priceRecord.Open = utils.StringToFloat64(rowData[1])
+			priceRecord.High = utils.StringToFloat64(rowData[2])
+			priceRecord.Low = utils.StringToFloat64(rowData[3])
+			priceRecord.Close = utils.StringToFloat64(rowData[4])
+			priceRecord.AdjustedClose = utils.StringToFloat64(rowData[5])
+			priceRecord.Volume = utils.StringToInt64(rowData[6])
 
 			result = append(result, priceRecord)
 		}

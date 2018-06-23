@@ -3,14 +3,14 @@ package hkex
 import (
 	"regexp"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/pkg/errors"
 )
 
 func getAccessToken() (string, error) {
 	urlStr := "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities?sc_lang=en"
 
-	_, bodyString, err := util.HttpGetResponseContent(urlStr)
+	_, bodyString, err := utils.HttpGetResponseContent(urlStr)
 	if err != nil {
 		return "", err
 	}
