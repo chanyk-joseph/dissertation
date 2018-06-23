@@ -6,7 +6,6 @@ import (
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/bloomberg"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/hkex"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/investtab"
@@ -20,8 +19,13 @@ func check(err error) {
 }
 
 func main() {
+	q := GetQuoteFromAllProviders(util.NewStandardSymbol("700"))
+	fmt.Println(util.ObjectToJSONString(q))
+}
+
+func BasicTest() {
 	{
-		result, err := aastocks.Quote(converter.NewStandardSymbol("00700"))
+		result, err := aastocks.Quote(util.NewStandardSymbol("00700"))
 		if err != nil {
 			panic(err)
 		}
@@ -29,7 +33,7 @@ func main() {
 	}
 
 	{
-		result, err := bloomberg.Quote(converter.NewStandardSymbol("700:HK"))
+		result, err := bloomberg.Quote(util.NewStandardSymbol("700:HK"))
 		if err != nil {
 			panic(err)
 		}
@@ -37,7 +41,7 @@ func main() {
 	}
 
 	{
-		result, err := hkex.Quote(converter.NewStandardSymbol("700"))
+		result, err := hkex.Quote(util.NewStandardSymbol("700"))
 		if err != nil {
 			panic(err)
 		}
@@ -45,25 +49,25 @@ func main() {
 	}
 
 	{
-		info, err := investtab.GetInfo(converter.NewStandardSymbol("00700:HK"))
+		info, err := investtab.GetInfo(util.NewStandardSymbol("00700:HK"))
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println(info.ToJSONString())
 
-		result, err := investtab.Quote(converter.NewStandardSymbol("00700:HK"))
+		result, err := investtab.Quote(util.NewStandardSymbol("00700:HK"))
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println(result.ToJSONString())
 
-		funds, err := investtab.GetFundamentals(converter.NewStandardSymbol("00700:HK"))
+		funds, err := investtab.GetFundamentals(util.NewStandardSymbol("00700:HK"))
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println(funds.ToJSONString())
 
-		didRecords, err := investtab.GetDividendRecords(converter.NewStandardSymbol("00700:HK"))
+		didRecords, err := investtab.GetDividendRecords(util.NewStandardSymbol("00700:HK"))
 		if err != nil {
 			panic(err)
 		}
@@ -79,7 +83,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		pxRecords, err := investtab.GetPriceRecords(converter.NewStandardSymbol("00001"), beginTime, endTime)
+		pxRecords, err := investtab.GetPriceRecords(util.NewStandardSymbol("00001"), beginTime, endTime)
 		if err != nil {
 			panic(err)
 		}
@@ -97,13 +101,13 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		pxRecords, err := yahoo.GetPriceRecords(converter.NewStandardSymbol("1:HK"), beginTime, endTime)
+		pxRecords, err := yahoo.GetPriceRecords(util.NewStandardSymbol("1:HK"), beginTime, endTime)
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println(util.ObjectToJSONString(pxRecords))
 	}
 
-	str := converter.NewStandardSymbol("12")
+	str := util.NewStandardSymbol("12")
 	fmt.Println(str.Symbol)
 }

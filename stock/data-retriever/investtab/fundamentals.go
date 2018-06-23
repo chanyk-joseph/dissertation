@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
@@ -38,7 +38,7 @@ type Fundamentals struct {
 func (fundamentals Fundamentals) ToJSONString() string {
 	return util.ObjectToJSONString(fundamentals)
 }
-func GetFundamentals(standardSymbol converter.StandardSymbol) (Fundamentals, error) {
+func GetFundamentals(standardSymbol models.StandardSymbol) (Fundamentals, error) {
 	var result Fundamentals
 	symbol := strings.Replace(standardSymbol.Symbol, ".", ":", -1)
 

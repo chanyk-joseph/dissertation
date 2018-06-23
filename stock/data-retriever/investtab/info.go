@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
@@ -63,7 +63,7 @@ func (info Info) ToJSONString() string {
 	return util.ObjectToJSONString(info)
 }
 
-func GetInfo(standardSymbol converter.StandardSymbol) (Info, error) {
+func GetInfo(standardSymbol models.StandardSymbol) (Info, error) {
 	var result Info
 	symbol := strings.Replace(standardSymbol.Symbol, ".", ":", -1)
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
@@ -59,7 +59,7 @@ func (quote EquityQuote) ToJSONString() string {
 	return util.ObjectToJSONString(quote)
 }
 
-func Quote(standardSymbol converter.StandardSymbol) (EquityQuote, error) {
+func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	var result EquityQuote
 	symbol := strings.Replace(standardSymbol.Symbol, ".", ":", -1)
 

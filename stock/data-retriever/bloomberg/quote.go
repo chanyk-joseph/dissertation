@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 	"github.com/pkg/errors"
 )
@@ -47,10 +47,10 @@ func (quote EquityQuote) ToJSONString() string {
 
 // Quote return result from bloomberg
 // Example symbol: 700:HK
-func Quote(standardSymbol converter.StandardSymbol) (EquityQuote, error) {
+func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	result := EquityQuote{}
 
-	code, err := converter.ExtractStockCode(standardSymbol.Symbol)
+	code, err := util.ExtractStockCode(standardSymbol.Symbol)
 	if err != nil {
 		return result, err
 	}

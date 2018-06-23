@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
@@ -72,7 +72,7 @@ func (companyInfo *CompanyBackgroundInfo) UnmarshalJSON(data []byte) error {
 }
 */
 
-func GetCompanyBackgroundInfo(standardSymbol converter.StandardSymbol, useEng ...bool) (CompanyBackgroundInfo, error) {
+func GetCompanyBackgroundInfo(standardSymbol models.StandardSymbol, useEng ...bool) (CompanyBackgroundInfo, error) {
 	symbol := strings.Replace(standardSymbol.Symbol, ".", ":", -1)
 	url := fmt.Sprintf("https://api.investtab.com/api/quote/%s/company-info?locale=zh_hk", symbol)
 	if len(useEng) > 0 && useEng[0] {
@@ -200,7 +200,7 @@ func getAllCompanyBackgroundInfo() {
 		go func(i int) {
 			symbol := fmt.Sprintf("%05d:HK", i)
 
-			companyInfo, err := GetCompanyBackgroundInfo(converter.NewStandardSymbol(symbol))
+			companyInfo, err := GetCompanyBackgroundInfo(util.NewStandardSymbol(symbol))
 			if err == nil {
 				CompanyInfos <- companyInfo
 			}

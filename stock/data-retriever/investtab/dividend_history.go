@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
@@ -35,7 +35,7 @@ func (dividendRecord DividendRecord) ToJSONString() string {
 	return util.ObjectToJSONString(dividendRecord)
 }
 
-func GetDividendRecords(standardSymbol converter.StandardSymbol) ([]DividendRecord, error) {
+func GetDividendRecords(standardSymbol models.StandardSymbol) ([]DividendRecord, error) {
 	result := []DividendRecord{}
 	symbol := strings.Replace(standardSymbol.Symbol, ".", ":", -1)
 

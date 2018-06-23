@@ -1,19 +1,15 @@
-package converter
+package util
 
 import (
 	"errors"
 	"fmt"
 	"regexp"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 )
 
-type StandardSymbol struct {
-	Symbol string `json:"symbol"`
-}
-
-func NewStandardSymbol(symbol string) StandardSymbol {
-	result := StandardSymbol{}
+func NewStandardSymbol(symbol string) models.StandardSymbol {
+	result := models.StandardSymbol{}
 
 	var err error
 	if result.Symbol, err = ConvertToStandardSymbol(symbol); err != nil {
@@ -29,7 +25,7 @@ func ConvertToStandardSymbol(symbol string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	stockCode := util.StringToInt(code)
+	stockCode := StringToInt(code)
 
 	return fmt.Sprintf("%05d.HK", stockCode), nil
 }

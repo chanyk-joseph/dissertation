@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 )
 
@@ -24,7 +24,7 @@ func (priceRecord PriceRecord) ToJSONString() string {
 	return util.ObjectToJSONString(priceRecord)
 }
 
-func GetPriceRecords(standardSymbol converter.StandardSymbol, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
+func GetPriceRecords(standardSymbol models.StandardSymbol, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
 	result := []PriceRecord{}
 	symbol := standardSymbol.Symbol[:len(standardSymbol.Symbol)-3]
 

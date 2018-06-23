@@ -3,7 +3,7 @@ package aastocks
 import (
 	"regexp"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 	"github.com/pkg/errors"
 )
@@ -38,7 +38,7 @@ func (quote EquityQuote) ToJSONString() string {
 
 // Quote From aastocks (not working at this moment)
 // Example symbol: 00700
-func Quote(standardSymbol converter.StandardSymbol) (EquityQuote, error) {
+func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	result := EquityQuote{}
 
 	symbol := standardSymbol.Symbol[:len(standardSymbol.Symbol)-3]

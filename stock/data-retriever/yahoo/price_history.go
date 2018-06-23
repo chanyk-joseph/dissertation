@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/converter"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/util"
 	"github.com/gocolly/colly"
 	"github.com/oliveagle/jsonpath"
@@ -36,7 +36,7 @@ func (p *PriceRecord) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func GetPriceRecords(standardSymbol converter.StandardSymbol, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
+func GetPriceRecords(standardSymbol models.StandardSymbol, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
 	result := []PriceRecord{}
 	symbol := standardSymbol.Symbol[1:]
 
