@@ -70,36 +70,47 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	result.Symbol = match[1]
 	result.Exchange = match[2]
 	result.CompanyName = match[3]
-	result.LastTradedPrice = util.StringToFloat64(match[4])
+	result.LastTradedPrice = toFloat64OrZero(match[4])
 	result.Currency = match[5]
-	result.Open = util.StringToFloat64(match[6])
-	result.PreviousClose = util.StringToFloat64(match[7])
+	result.Open = toFloat64OrZero(match[6])
+	result.PreviousClose = toFloat64OrZero(match[7])
 	result.Volume = util.StringToInt(strings.Replace(match[8], ",", "", -1))
 	result.MarketCap = match[9]
-	result.Low = util.StringToFloat64(match[10])
-	result.High = util.StringToFloat64(match[11])
-	result.Low52Weeks = util.StringToFloat64(match[12])
-	result.High52Weeks = util.StringToFloat64(match[13])
+	result.Low = toFloat64OrZero(match[10])
+	result.High = toFloat64OrZero(match[11])
+	result.Low52Weeks = toFloat64OrZero(match[12])
+	result.High52Weeks = toFloat64OrZero(match[13])
 
 	re = regexp.MustCompile(`(?m)<span>P/E Ratio<\/span>.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<.*?fieldValue.*?>(.*?)<`)
 	match = re.FindStringSubmatch(bodyString)
 	if len(match) != 13 {
 		return result, errors.Errorf("Unable To Extract Bloomberg Quote: \n%s", bodyString)
 	}
-	result.PE = util.StringToFloat64(match[1])
-	result.BestPE = util.StringToFloat64(match[2])
-	result.BestPEG = util.StringToFloat64(match[3])
+	result.PE = toFloat64OrZero(match[1])
+	result.BestPE = toFloat64OrZero(match[2])
+	result.BestPEG = toFloat64OrZero(match[3])
 	result.SharesOutstanding = match[4]
-	result.PriceToBookRatio = util.StringToFloat64(match[5])
-	result.PriceToSalesRatio = util.StringToFloat64(match[6])
+	result.PriceToBookRatio = toFloat64OrZero(match[5])
+	result.PriceToSalesRatio = toFloat64OrZero(match[6])
 	result.OneYearReturn = match[7]
 	result.AverageVolume30Days = util.StringToInt(strings.Replace(match[8], ",", "", -1))
-	result.EPS = util.StringToFloat64(match[9])
-	result.BestEPSInCurrentYear = util.StringToFloat64(match[10])
+	result.EPS = toFloat64OrZero(match[9])
+	result.BestEPSInCurrentYear = toFloat64OrZero(match[10])
 	result.Dividend = match[11]
-	result.LastDividendReported = util.StringToFloat64(match[12])
+	result.LastDividendReported = toFloat64OrZero(match[12])
 
 	return result, nil
+}
+
+func toFloat64OrZero(str string) (result float64) {
+	defer func() {
+		// recover from panic if one occured. Set err to nil otherwise.
+		if recover() != nil {
+			result = 0
+		}
+	}()
+
+	return util.StringToFloat64(str)
 }
 
 /*

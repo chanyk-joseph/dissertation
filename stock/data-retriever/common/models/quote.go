@@ -12,3 +12,7 @@ type QuoteFromAllProviders struct {
 	StandardSymbol
 	Quotes map[string]StandardQuote `json:"quotes"`
 }
+
+type QuotesOfHSIComponents struct {
+	Quotes []QuoteFromAllProviders `json:"quotes"`
+}

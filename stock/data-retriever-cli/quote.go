@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
@@ -74,5 +75,21 @@ func GetQuoteFromAllProviders(symbol models.StandardSymbol) models.QuoteFromAllP
 	}()
 
 	quoteWaitGroup.Wait()
+	return result
+}
+
+func GetQuotesOfHSIComponents() models.QuotesOfHSIComponents {
+	result := models.QuotesOfHSIComponents{}
+	hsiComponentsSymbols, err := aastocks.GetHSIConstituentsCodes()
+	if err != nil {
+		panic(err)
+	}
+
+	for _, sym := range hsiComponentsSymbols {
+		fmt.Println("Quoting " + sym.Symbol)
+		q := GetQuoteFromAllProviders(sym)
+		result.Quotes = append(result.Quotes, q)
+	}
+
 	return result
 }

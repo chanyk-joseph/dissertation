@@ -19,7 +19,10 @@ func check(err error) {
 }
 
 func main() {
-	q := GetQuoteFromAllProviders(util.NewStandardSymbol("700"))
+	// q := GetQuotesOfHSIComponents()
+	// fmt.Println(util.ObjectToJSONString(q))
+
+	q := GetQuoteFromAllProviders(util.NewStandardSymbol("00762.HK"))
 	fmt.Println(util.ObjectToJSONString(q))
 }
 
