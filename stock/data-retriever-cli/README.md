@@ -94,5 +94,4 @@ http://127.0.0.1:8888/hsicomponents/quote
 ```
 ./data-retriever-cli update <mysql_ip> <mysql_username> <mysql_password> -i <update_interval_in_seconds>
 ```
-![Screenshot](/mysql_sample_content.PNG?raw=true "Screenshot")
-![Screenshot](https://raw.githubusercontent.com/chanyk-joseph/dissertation/stock/data-retriever-cli/mysql_sample_content.PNG)
+![Screenshot](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/mysql_sample_content.PNG)
