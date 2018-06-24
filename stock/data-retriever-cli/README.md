@@ -91,14 +91,14 @@ http://127.0.0.1:8888/hsicomponents/quote
 					"high": 70,
 					"close": 68.7,
 					"volume": 15410000
-				},
+				}, 
 				"hkex": {
 					"open": 70,
 					"low": 68.3,
 					"high": 70,
 					"close": 68.7,
 					"volume": 15410000
-				}
+				}, ...
 			}
 		}, {
 			"symbol": "01038.HK",
@@ -109,14 +109,14 @@ http://127.0.0.1:8888/hsicomponents/quote
 					"high": 57.95,
 					"close": 57.45,
 					"volume": 2610000
-				},
+				}, 
 				"investtab": {
 					"open": 57.9,
 					"low": 57,
 					"high": 57.95,
 					"close": 57.45,
 					"volume": 2613142
-				}
+				}, ...
 			}
 		}, ...
 	]
