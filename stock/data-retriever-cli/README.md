@@ -275,6 +275,6 @@ Serve stock quote via RestAPI / save to mysql database
 ## Create and update quote to mysql database
 (p.s. If the table 'stocks_quotes' does not exist, it will create one)
 ```
-./data-retriever-cli update <mysql_ip> <mysql_username> <mysql_password> -i <update_interval_in_seconds>
+./data-retriever-cli update <mysql_ip> <db_name> <mysql_username> <mysql_password> -i <update_interval_in_seconds>
 ```
 ![Screenshot](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/mysql_sample_content.PNG)

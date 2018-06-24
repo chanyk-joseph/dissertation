@@ -16,6 +16,7 @@ var (
 
 	dbUpdateCommand         = app.Command("update", "Update mysql database with all HSI components quotes. If the table 'stocks_quotes' does not exist, it will create one")
 	dbServerAddr            = dbUpdateCommand.Arg("ip", "Mysql Server IP").Required().String()
+	dbName                  = dbUpdateCommand.Arg("db", "Database name").Required().String()
 	dbUsername              = dbUpdateCommand.Arg("username", "Username for Mysql Server").Required().String()
 	dbPassword              = dbUpdateCommand.Arg("password", "Password for Mysql Server").Required().String()
 	updateIntervalInSeconds = dbUpdateCommand.Flag("interval", "Update interval in seconds, Default = 60").Default("60").Short('i').Int()
@@ -40,7 +41,7 @@ func main() {
 				select {
 				case <-ticker.C:
 					fmt.Println("Start Updating Database")
-					UpdateDatabase(*dbServerAddr, *dbUsername, *dbPassword)
+					UpdateDatabase(*dbServerAddr, *dbUsername, *dbPassword, *dbName)
 				}
 			}
 		}()

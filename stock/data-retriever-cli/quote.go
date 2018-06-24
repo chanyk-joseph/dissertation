@@ -111,8 +111,14 @@ func GetQuotesOfHSIComponents() (result models.QuotesOfHSIComponents, err error)
 	return result, nil
 }
 
-func UpdateDatabase(dbAddr string, username string, password string) {
-	connectStr := fmt.Sprintf("%s:%s@tcp(%s)/haudosicom_dissertation", username, password, dbAddr)
+func UpdateDatabase(dbAddr string, username string, password string, dbName string) {
+	defer func() {
+		if recover() != nil {
+			return
+		}
+	}()
+
+	connectStr := fmt.Sprintf("%s:%s@tcp(%s)/%s", username, password, dbAddr, dbName)
 	db, err := sql.Open("mysql", connectStr)
 	defer db.Close()
 	if err != nil {
