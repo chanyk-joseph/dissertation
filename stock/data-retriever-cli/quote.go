@@ -3,17 +3,22 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/bloomberg"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/hkex"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/investtab"
+	"github.com/vjeantet/jodaTime"
 
 	"github.com/karlseguin/ccache"
+
+	"database/sql"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var cache *ccache.Cache
@@ -38,57 +43,29 @@ func GetQuoteFromAllProviders(symbol models.StandardSymbol) (models.QuoteFromAll
 		var quoteWaitGroup sync.WaitGroup
 		quoteWaitGroup.Add(1)
 		go func() {
-			tmp := models.StandardQuote{}
-			q, err := hkex.Quote(symbol)
-			if err == nil {
-				tmp.Open = utils.StringToFloat64(q.Open)
-				tmp.Low = utils.StringToFloat64(q.Low)
-				tmp.High = utils.StringToFloat64(q.High)
-				tmp.Close = utils.StringToFloat64(q.LastTradedPrice)
-				tmp.Volume = int64(utils.ConvertNumberWithUnitToActualNumber(q.Volume + q.VolumeUnit))
-				setQuote("hkex", tmp)
+			if q, err := hkex.Quote(symbol); err == nil {
+				setQuote("hkex", hkex.ToStandardQuote(q))
 			}
 			quoteWaitGroup.Done()
 		}()
 		quoteWaitGroup.Add(1)
 		go func() {
-			tmp := models.StandardQuote{}
-			q, err := aastocks.Quote(symbol)
-			if err == nil {
-				tmp.Open = q.Open
-				tmp.Low = q.Low
-				tmp.High = q.High
-				tmp.Close = q.LastTradedPrice
-				tmp.Volume = int64(utils.ConvertNumberWithUnitToActualNumber(q.Volume))
-				setQuote("aastocks", tmp)
+			if q, err := aastocks.Quote(symbol); err == nil {
+				setQuote("aastocks", aastocks.ToStandardQuote(q))
 			}
 			quoteWaitGroup.Done()
 		}()
 		quoteWaitGroup.Add(1)
 		go func() {
-			tmp := models.StandardQuote{}
-			q, err := bloomberg.Quote(symbol)
-			if err == nil {
-				tmp.Open = q.Open
-				tmp.Low = q.Low
-				tmp.High = q.High
-				tmp.Close = q.LastTradedPrice
-				tmp.Volume = int64(q.Volume)
-				setQuote("bloomberg", tmp)
+			if q, err := bloomberg.Quote(symbol); err == nil {
+				setQuote("bloomberg", bloomberg.ToStandardQuote(q))
 			}
 			quoteWaitGroup.Done()
 		}()
 		quoteWaitGroup.Add(1)
 		go func() {
-			tmp := models.StandardQuote{}
-			q, err := investtab.Quote(symbol)
-			if err == nil {
-				tmp.Open = q.Open
-				tmp.Low = q.Low
-				tmp.High = q.High
-				tmp.Close = q.Close
-				tmp.Volume = int64(q.Volume)
-				setQuote("investtab", tmp)
+			if q, err := investtab.Quote(symbol); err == nil {
+				setQuote("investtab", investtab.ToStandardQuote(q))
 			}
 			quoteWaitGroup.Done()
 		}()
@@ -116,7 +93,6 @@ func GetQuotesOfHSIComponents() (result models.QuotesOfHSIComponents, err error)
 	for _, sym := range hsiComponentsSymbols {
 		fmt.Println("Quoting " + sym.Symbol)
 		q, err := GetQuoteFromAllProviders(sym)
-
 		if err != nil {
 			return result, err
 		}
@@ -124,4 +100,43 @@ func GetQuotesOfHSIComponents() (result models.QuotesOfHSIComponents, err error)
 	}
 
 	return result, nil
+}
+
+func UpdateDatabase(dbAddr string, username string, password string) {
+	connectStr := fmt.Sprintf("%s:%s@tcp(%s)/haudosicom_dissertation", username, password, dbAddr)
+	db, err := sql.Open("mysql", connectStr)
+	defer db.Close()
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	createTableSQLStr := "CREATE TABLE  IF NOT EXISTS `stocks_quotes` (" +
+		"`date` date NOT NULL," +
+		"`symbol` varchar(20) COLLATE latin1_general_ci NOT NULL," +
+		"`provider` varchar(20) COLLATE latin1_general_ci NOT NULL," +
+		"`open` float NOT NULL," +
+		"`low` float NOT NULL," +
+		"`high` float NOT NULL," +
+		"`close` float NOT NULL," +
+		"`volume` int(11) NOT NULL," +
+		"PRIMARY KEY (`date`, `symbol`, `provider`)" +
+		") ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci;"
+	db.Exec(createTableSQLStr)
+
+	quoteOfAllHSIComponents, err := GetQuotesOfHSIComponents()
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	tx, _ := db.Begin()
+	dateStr := jodaTime.Format("YYYY-MM-dd", time.Now().UTC())
+	for _, quoteFromAllProviders := range quoteOfAllHSIComponents.Quotes {
+		symbol := quoteFromAllProviders.Symbol
+		for providerID, quote := range quoteFromAllProviders.Quotes {
+			sqlStr := fmt.Sprintf("INSERT INTO `stocks_quotes` (`date`, `symbol`, `provider`, `open`, `low`, `high`, `close`, `volume`) VALUES ('%s', '%s', '%s', %.6f, %.6f, %.6f, %.6f, %d) ON DUPLICATE KEY UPDATE `open`=VALUES(`open`), `low`=VALUES(`low`), `high`=VALUES(`high`), `close`=VALUES(`close`), `volume`=VALUES(`volume`)", dateStr, symbol, providerID, quote.Open, quote.Low, quote.High, quote.Close, quote.Volume)
+			tx.Exec(sqlStr)
+		}
+	}
+	tx.Commit()
 }

@@ -93,6 +93,17 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	return result, nil
 }
 
+func ToStandardQuote(q EquityQuote) models.StandardQuote {
+	tmp := models.StandardQuote{}
+	tmp.Open = utils.StringToFloat64(q.Open)
+	tmp.Low = utils.StringToFloat64(q.Low)
+	tmp.High = utils.StringToFloat64(q.High)
+	tmp.Close = utils.StringToFloat64(q.LastTradedPrice)
+	tmp.Volume = int64(utils.ConvertNumberWithUnitToActualNumber(q.Volume + q.VolumeUnit))
+
+	return tmp
+}
+
 /*
 Example JSON:
 {

@@ -113,6 +113,17 @@ func toFloat64OrZero(str string) (result float64) {
 	return utils.StringToFloat64(str)
 }
 
+func ToStandardQuote(q EquityQuote) models.StandardQuote {
+	tmp := models.StandardQuote{}
+	tmp.Open = q.Open
+	tmp.Low = q.Low
+	tmp.High = q.High
+	tmp.Close = q.LastTradedPrice
+	tmp.Volume = int64(q.Volume)
+
+	return tmp
+}
+
 /*
 Example JSON:
 https://www.bloomberg.com/quote/700:HK

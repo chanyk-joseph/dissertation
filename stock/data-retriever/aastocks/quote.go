@@ -77,6 +77,17 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	return result, nil
 }
 
+func ToStandardQuote(q EquityQuote) models.StandardQuote {
+	tmp := models.StandardQuote{}
+	tmp.Open = q.Open
+	tmp.Low = q.Low
+	tmp.High = q.High
+	tmp.Close = q.LastTradedPrice
+	tmp.Volume = int64(utils.ConvertNumberWithUnitToActualNumber(q.Volume))
+
+	return tmp
+}
+
 /*
 Example JSON:
 http://www.aastocks.com/en/mobile/Quote.aspx?symbol=00700

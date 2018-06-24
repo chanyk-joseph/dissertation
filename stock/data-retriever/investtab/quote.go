@@ -81,6 +81,17 @@ func Quote(standardSymbol models.StandardSymbol) (EquityQuote, error) {
 	return result, nil
 }
 
+func ToStandardQuote(q EquityQuote) models.StandardQuote {
+	tmp := models.StandardQuote{}
+	tmp.Open = q.Open
+	tmp.Low = q.Low
+	tmp.High = q.High
+	tmp.Close = q.Close
+	tmp.Volume = int64(q.Volume)
+
+	return tmp
+}
+
 /*
 Example JSON:
 https://api.investtab.com/api/quote/00001:HK/technical
