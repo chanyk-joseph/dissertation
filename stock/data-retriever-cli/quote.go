@@ -12,9 +12,8 @@ import (
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/hkex"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/investtab"
-	"github.com/vjeantet/jodaTime"
-
 	"github.com/karlseguin/ccache"
+	"github.com/vjeantet/jodaTime"
 
 	"database/sql"
 
@@ -27,16 +26,26 @@ func init() {
 	cache = ccache.New(ccache.Configure())
 }
 
-func GetQuoteFromAllProviders(symbol models.StandardSymbol) (models.QuoteFromAllProviders, error) {
+type quote struct {
+	Standard models.StandardQuoteFromAllProviders
+	Raw      models.RawQuoteFromAllProviders
+}
+
+func GetQuoteFromAllProviders(symbol models.StandardSymbol) (models.RawQuoteFromAllProviders, models.StandardQuoteFromAllProviders, error) {
 	item, err := cache.Fetch(symbol.Symbol, 2*time.Minute, func() (interface{}, error) {
-		result := models.QuoteFromAllProviders{}
-		result.StandardSymbol = symbol
-		result.Quotes = make(map[string]models.StandardQuote)
+		result := quote{}
+		result.Standard = models.StandardQuoteFromAllProviders{}
+		result.Standard.StandardSymbol = symbol
+		result.Standard.Quotes = make(map[string]models.StandardQuote)
+		result.Raw = models.RawQuoteFromAllProviders{}
+		result.Raw.StandardSymbol = symbol
+		result.Raw.Quotes = make(map[string]interface{})
 
 		mLock := make(chan bool, 1)
-		setQuote := func(providerId string, quote models.StandardQuote) {
+		setQuote := func(providerId string, rawQuote interface{}, standardQuote models.StandardQuote) {
 			mLock <- true
-			result.Quotes[providerId] = quote
+			result.Raw.Quotes[providerId] = rawQuote
+			result.Standard.Quotes[providerId] = standardQuote
 			<-mLock
 		}
 
@@ -44,43 +53,43 @@ func GetQuoteFromAllProviders(symbol models.StandardSymbol) (models.QuoteFromAll
 		quoteWaitGroup.Add(1)
 		go func() {
 			if q, err := hkex.Quote(symbol); err == nil {
-				setQuote("hkex", hkex.ToStandardQuote(q))
+				setQuote("hkex", q, hkex.ToStandardQuote(q))
 			}
 			quoteWaitGroup.Done()
 		}()
 		quoteWaitGroup.Add(1)
 		go func() {
 			if q, err := aastocks.Quote(symbol); err == nil {
-				setQuote("aastocks", aastocks.ToStandardQuote(q))
+				setQuote("aastocks", q, aastocks.ToStandardQuote(q))
 			}
 			quoteWaitGroup.Done()
 		}()
 		quoteWaitGroup.Add(1)
 		go func() {
 			if q, err := bloomberg.Quote(symbol); err == nil {
-				setQuote("bloomberg", bloomberg.ToStandardQuote(q))
+				setQuote("bloomberg", q, bloomberg.ToStandardQuote(q))
 			}
 			quoteWaitGroup.Done()
 		}()
 		quoteWaitGroup.Add(1)
 		go func() {
 			if q, err := investtab.Quote(symbol); err == nil {
-				setQuote("investtab", investtab.ToStandardQuote(q))
+				setQuote("investtab", q, investtab.ToStandardQuote(q))
 			}
 			quoteWaitGroup.Done()
 		}()
 
 		quoteWaitGroup.Wait()
-		if len(result.Quotes) == 0 {
+		if len(result.Standard.Quotes) == 0 {
 			return nil, errors.New("No Quote From All Providers")
 		}
 		return result, nil
 	})
 
 	if err != nil {
-		return models.QuoteFromAllProviders{}, err
+		return models.RawQuoteFromAllProviders{}, models.StandardQuoteFromAllProviders{}, err
 	}
-	return item.Value().(models.QuoteFromAllProviders), nil
+	return item.Value().(quote).Raw, item.Value().(quote).Standard, nil
 }
 
 func GetQuotesOfHSIComponents() (result models.QuotesOfHSIComponents, err error) {
@@ -92,7 +101,7 @@ func GetQuotesOfHSIComponents() (result models.QuotesOfHSIComponents, err error)
 
 	for _, sym := range hsiComponentsSymbols {
 		fmt.Println("Quoting " + sym.Symbol)
-		q, err := GetQuoteFromAllProviders(sym)
+		_, q, err := GetQuoteFromAllProviders(sym)
 		if err != nil {
 			return result, err
 		}

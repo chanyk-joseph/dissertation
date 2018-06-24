@@ -6,6 +6,7 @@ import (
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/yahoo"
 
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -49,9 +50,26 @@ func SetupWebserver() *echo.Echo {
 		if err != nil {
 			return c.JSON(500, ErrorWrapper{err.Error()})
 		}
+		bShowRaw := false
+		tmp := c.FormValue("raw")
+		if tmp == "true" {
+			bShowRaw = true
+		}
 
-		q, err := GetQuoteFromAllProviders(utils.NewStandardSymbol(stockSymbol))
+		allQuote := struct {
+			models.StandardSymbol
+			Standard map[string]models.StandardQuote `json:"quotes"`
+			Raw      map[string]interface{}          `json:"raw"`
+		}{}
+
+		rawQuote, q, err := GetQuoteFromAllProviders(utils.NewStandardSymbol(stockSymbol))
+		allQuote.Symbol = q.Symbol
+		allQuote.Standard = q.Quotes
+		allQuote.Raw = rawQuote.Quotes
 		if err == nil {
+			if bShowRaw {
+				return c.JSON(200, allQuote)
+			}
 			return c.JSON(200, q)
 		}
 		return c.JSON(404, ErrorWrapper{err.Error()})

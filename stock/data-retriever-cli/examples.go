@@ -108,11 +108,11 @@ func Examples() {
 	fmt.Println(str.Symbol)
 
 	{
-		q, _ := GetQuoteFromAllProviders(utils.NewStandardSymbol("00001.HK"))
+		_, q, _ := GetQuoteFromAllProviders(utils.NewStandardSymbol("00001.HK"))
 		fmt.Println(utils.ObjectToJSONString(q))
 
-		q, _ = GetQuoteFromAllProviders(utils.NewStandardSymbol("00762.HK"))
-		fmt.Println(utils.ObjectToJSONString(q))
+		r, _, _ := GetQuoteFromAllProviders(utils.NewStandardSymbol("00762.HK"))
+		fmt.Println(utils.ObjectToJSONString(r))
 
 		hsiQ, _ := GetQuotesOfHSIComponents()
 		fmt.Println(utils.ObjectToJSONString(hsiQ))

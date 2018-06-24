@@ -8,11 +8,16 @@ type StandardQuote struct {
 	Volume int64   `json:"volume"`
 }
 
-type QuoteFromAllProviders struct {
+type StandardQuoteFromAllProviders struct {
 	StandardSymbol
 	Quotes map[string]StandardQuote `json:"quotes"`
 }
 
+type RawQuoteFromAllProviders struct {
+	StandardSymbol
+	Quotes map[string]interface{} `json:"quotes"`
+}
+
 type QuotesOfHSIComponents struct {
-	Quotes []QuoteFromAllProviders `json:"quotes"`
+	Quotes []StandardQuoteFromAllProviders `json:"quotes"`
 }
