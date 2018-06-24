@@ -2,24 +2,24 @@
 A single executable for serving quote requests via RestAPI / updating HSI components quotes to mysql database       
 
 ## Download
-[Windows-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_windows_x64.exe)&lt;br/&gt;
-[Linux-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_linux_x64.exe)&lt;br/&gt;
+[Windows-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_windows_x64.exe)<br/>
+[Linux-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_linux_x64.exe)<br/>
 [Mac-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_darwin_x64.exe)
-&lt;br/&gt;
+<br/>
 # Stock Quote Rest API Server Usage
 ```
 ./data-retriever-cli web -p 8888
 ```
 #### Endpoints
 ---
-* http://127.0.0.1:&lt;port&gt;/quote/&lt;stock_symbol&gt;
-* http://127.0.0.1:&lt;port&gt;/quote/&lt;stock_symbol&gt;?raw=true
-* http://127.0.0.1:&lt;port&gt;/daily_history/&lt;stock_symbol&gt;?startdate=&lt;date&gt;&enddate=&lt;date&gt;
-* http://127.0.0.1:&lt;port&gt;/hsicomponents
-* http://127.0.0.1:&lt;port&gt;/hsicomponents/quote
+* /quote/&lt;stock_symbol&gt;
+* /quote/&lt;stock_symbol&gt;?raw=true
+* /daily_history/&lt;stock_symbol&gt;?startdate=&lt;date&gt;&enddate=&lt;date&gt;
+* /hsicomponents
+* /hsicomponents/quote
 
-**&lt;port&gt;**: specified in command line argument &lt;br/&gt;
-**&lt;stock_symbol&gt;**: 700, 0700, 00700, 700.HK, 700:HK etc &lt;br/&gt;
+**&lt;port&gt;**: specified in command line argument <br/>
+**&lt;stock_symbol&gt;**: 700, 0700, 00700, 700.HK, 700:HK etc <br/>
 **&lt;date&gt;**: YYYY-MM-dd, eg: 2018-12-31
 
 #### Rest API Sample Responses
