@@ -1,11 +1,30 @@
-Serve stock quote via RestAPI / save to mysql database
+### HK Market Stock Quote
+A single executable for serving quote requests via RestAPI / updating HSI components quotes to mysql database       
 
-## Stock Quote Rest API Usage
+## Download
+[Windows-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_windows_x64.exe)<br/>
+[Linux-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_linux_x64.exe)<br/>
+[Mac-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_darwin_x64.exe)
+<br/>
+# Stock Quote Rest API Server Usage
 ```
 ./data-retriever-cli web -p 8888
 ```
-<br />http://127.0.0.1:8888/quote/700
-<br />(p.s. the stock symbol used in the GET query could be in many formats: 700, 0700, 00700, 700.HK, 700:HK etc.)
+#### Endpoints
+---
+* http://127.0.0.1:&#x3C;port&#x3E;/quote/&#x3C;stock_symbol&#x3E;
+* http://127.0.0.1:&#x3C;port&#x3E;/quote/&#x3C;stock_symbol&#x3E;?raw=true
+* http://127.0.0.1:&#x3C;port&#x3E;/daily_history/&#x3C;stock_symbol&#x3E;?startdate=&#x3C;date&#x3E;&enddate=&#x3C;date&#x3E;
+* http://127.0.0.1:&#x3C;port&#x3E;/hsicomponents
+* http://127.0.0.1:&#x3C;port&#x3E;/hsicomponents/quote
+
+**&#x3C;port&#x3E;**: specified in command line argument <br/>
+**&#x3C;stock_symbol&#x3E;**: 700, 0700, 00700, 700.HK, 700:HK etc <br/>
+**&#x3C;date&#x3E;**: YYYY-MM-dd, eg: 2018-12-31
+
+#### Rest API Sample Responses
+---
+###### http://127.0.0.1:8888/quote/700
 ```json
 {
 	"symbol": "00700.HK",
@@ -41,8 +60,8 @@ Serve stock quote via RestAPI / save to mysql database
 	}
 }
 ```
-
-<br />http://127.0.0.1:8888/quote/700?raw=true
+---
+###### http://127.0.0.1:8888/quote/700?raw=true
 ```json
 {
 	"symbol": "00700.HK",
@@ -190,8 +209,8 @@ Serve stock quote via RestAPI / save to mysql database
 }
 ```
 
-<br />http://127.0.0.1:8888/daily_history/700?startdate=2000-01-01&enddate=2018-06-24
-<br />(p.s. default startdate = 2000-01-01; default enddate = today)
+---
+###### http://127.0.0.1:8888/daily_history/700?startdate=2000-01-01&enddate=2018-06-24
 ```json
 [{
 		"open": 0.875,
@@ -221,12 +240,14 @@ Serve stock quote via RestAPI / save to mysql database
 ]
 ```
 
-<br />http://127.0.0.1:8888/hsicomponents
+---
+###### http://127.0.0.1:8888/hsicomponents
 ```json
 ["00941.HK","01038.HK","01044.HK","01088.HK","01093.HK","01109.HK","01113.HK","01299.HK","01398.HK","01928.HK","01997.HK","02007.HK","02018.HK","02318.HK","02319.HK","02382.HK","02388.HK","02628.HK","03328.HK","03988.HK","00001.HK","00002.HK","00003.HK","00005.HK","00006.HK","00011.HK","00012.HK","00016.HK","00017.HK","00019.HK","00023.HK","00027.HK","00066.HK","00083.HK","00101.HK","00144.HK","00151.HK","00175.HK","00267.HK","00288.HK","00386.HK","00388.HK","00688.HK","00700.HK","00762.HK","00823.HK","00836.HK","00857.HK","00883.HK","00939.HK"]
 ```
 
-<br />http://127.0.0.1:8888/hsicomponents/quote
+---
+###### http://127.0.0.1:8888/hsicomponents/quote
 ```json
 {
 	"quotes": [{
@@ -270,11 +291,10 @@ Serve stock quote via RestAPI / save to mysql database
 }
 ```
 
-------------------
 
-## Create and update quote to mysql database
-(p.s. If the table 'stocks_quotes' does not exist, it will create one)
+# Create and update quote to mysql database
 ```
 ./data-retriever-cli update <mysql_ip> <db_name> <mysql_username> <mysql_password> -i <update_interval_in_seconds>
 ```
+(p.s. If the table 'stocks_quotes' does not exist, it will create one)
 ![Screenshot](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/mysql_sample_content.PNG)
