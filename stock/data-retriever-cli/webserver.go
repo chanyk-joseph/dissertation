@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/labstack/echo"
@@ -43,11 +41,10 @@ func SetupWebserver() *echo.Echo {
 	})
 	e.GET("/quote/:symbol", func(c echo.Context) error {
 		stockSymbol := c.Param("symbol")
-		q := GetQuoteFromAllProviders(utils.NewStandardSymbol(stockSymbol))
-		if len(q.Quotes) > 0 {
+		q, err := GetQuoteFromAllProviders(utils.NewStandardSymbol(stockSymbol))
+		if err == nil {
 			return c.JSON(200, q)
 		}
-		err := errors.New("No Quote Result From All Data Providers")
 		return c.JSON(404, ErrorWrapper{err.Error()})
 	})
 
