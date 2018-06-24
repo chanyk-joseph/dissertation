@@ -91,6 +91,7 @@ http://127.0.0.1:8888/hsicomponents/quote
 ------------------
 
 ## Create and update quote to mysql database
+(p.s. If the table 'stocks_quotes' does not exist, it will create one)
 ```
 ./data-retriever-cli update <mysql_ip> <mysql_username> <mysql_password> -i <update_interval_in_seconds>
 ```
