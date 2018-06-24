@@ -12,7 +12,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 ```
 #### Endpoints
 ---
-* /quote/&lt;stock_symbol&gt;
+* [/quote/&lt;stock_symbol&gt;](#simple-quote)
 * /quote/&lt;stock_symbol&gt;?raw=true
 * /daily_history/&lt;stock_symbol&gt;?startdate=&lt;date&gt;&enddate=&lt;date&gt;
 * /hsicomponents
@@ -23,7 +23,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 
 #### Rest API Sample Responses
 ---
-###### http://127.0.0.1:8888/quote/700
+###### <a name="simple-quote"></a>http://127.0.0.1:8888/quote/700
 ```json
 {
 	"symbol": "00700.HK",
