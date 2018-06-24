@@ -4,7 +4,8 @@ Serve stock quote via RestAPI / save to mysql database
 ```
 ./data-retriever-cli web -p 8888
 ```
-http://127.0.0.1:8888/quote/700 (p.s. the stock symbol could be in many formats: 700, 0700, 00700, 700.HK, 700:HK etc.)
+http://127.0.0.1:8888/quote/700
+(p.s. the stock symbol used in the GET query could be in many formats: 700, 0700, 00700, 700.HK, 700:HK etc.)
 ```json
 {
 	"symbol": "00700.HK",
