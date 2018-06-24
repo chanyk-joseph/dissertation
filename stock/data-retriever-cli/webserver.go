@@ -1,10 +1,15 @@
 package main
 
 import (
+	"time"
+
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever/yahoo"
+
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/vjeantet/jodaTime"
 )
 
 type ErrorWrapper struct {
@@ -40,12 +45,46 @@ func SetupWebserver() *echo.Echo {
 		return c.JSON(500, ErrorWrapper{err.Error()})
 	})
 	e.GET("/quote/:symbol", func(c echo.Context) error {
-		stockSymbol := c.Param("symbol")
+		stockSymbol, err := utils.ConvertToStandardSymbol(c.Param("symbol"))
+		if err != nil {
+			return c.JSON(500, ErrorWrapper{err.Error()})
+		}
+
 		q, err := GetQuoteFromAllProviders(utils.NewStandardSymbol(stockSymbol))
 		if err == nil {
 			return c.JSON(200, q)
 		}
 		return c.JSON(404, ErrorWrapper{err.Error()})
+	})
+	e.GET("/daily_history/:symbol", func(c echo.Context) error {
+		stockSymbol, err := utils.ConvertToStandardSymbol(c.Param("symbol"))
+		if err != nil {
+			return c.JSON(500, ErrorWrapper{err.Error()})
+		}
+
+		t1 := c.FormValue("startdate")
+		t2 := c.FormValue("enddate")
+		if t1 == "" {
+			t1 = "2000-01-01"
+		}
+		if t2 == "" {
+			t2 = jodaTime.Format("YYYY-MM-dd", time.Now().UTC())
+		}
+
+		startTime, err := jodaTime.Parse("YYYY-MM-dd", t1)
+		if err != nil {
+			return c.JSON(500, ErrorWrapper{err.Error()})
+		}
+		endTime, err := jodaTime.Parse("YYYY-MM-dd", t2)
+		if err != nil {
+			return c.JSON(500, ErrorWrapper{err.Error()})
+		}
+
+		result, err := yahoo.GetPriceRecords(utils.NewStandardSymbol(stockSymbol), startTime, endTime)
+		if err != nil {
+			return c.JSON(500, ErrorWrapper{err.Error()})
+		}
+		return c.JSON(200, result)
 	})
 
 	return e
