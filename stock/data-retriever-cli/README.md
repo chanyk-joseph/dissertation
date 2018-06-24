@@ -12,15 +12,15 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 ```
 #### Endpoints
 ---
-* http://127.0.0.1:&#x3C;port&#x3E;/quote/&#x3C;stock_symbol&#x3E;
-* http://127.0.0.1:&#x3C;port&#x3E;/quote/&#x3C;stock_symbol&#x3E;?raw=true
-* http://127.0.0.1:&#x3C;port&#x3E;/daily_history/&#x3C;stock_symbol&#x3E;?startdate=&#x3C;date&#x3E;&enddate=&#x3C;date&#x3E;
-* http://127.0.0.1:&#x3C;port&#x3E;/hsicomponents
-* http://127.0.0.1:&#x3C;port&#x3E;/hsicomponents/quote
+* http://127.0.0.1:<port>/quote/<stock_symbol>
+* http://127.0.0.1:<port>/quote/<stock_symbol>?raw=true
+* http://127.0.0.1:<port>/daily_history/<stock_symbol>?startdate=<date>&enddate=<date>
+* http://127.0.0.1:<port>/hsicomponents
+* http://127.0.0.1:<port>/hsicomponents/quote
 
-**&#x3C;port&#x3E;**: specified in command line argument <br/>
-**&#x3C;stock_symbol&#x3E;**: 700, 0700, 00700, 700.HK, 700:HK etc <br/>
-**&#x3C;date&#x3E;**: YYYY-MM-dd, eg: 2018-12-31
+**<port>**: specified in command line argument <br/>
+**<stock_symbol>**: 700, 0700, 00700, 700.HK, 700:HK etc <br/>
+**<date>**: YYYY-MM-dd, eg: 2018-12-31
 
 #### Rest API Sample Responses
 ---
