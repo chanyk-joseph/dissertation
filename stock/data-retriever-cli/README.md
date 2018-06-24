@@ -18,7 +18,6 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 * /hsicomponents
 * /hsicomponents/quote
 
-**&lt;port&gt;**: specified in command line argument <br/>
 **&lt;stock_symbol&gt;**: 700, 0700, 00700, 700.HK, 700:HK etc <br/>
 **&lt;date&gt;**: YYYY-MM-dd, eg: 2018-12-31
 
