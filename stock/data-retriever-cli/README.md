@@ -57,7 +57,6 @@ http://127.0.0.1:8888/hsicomponents/quote
 					"close": 68.7,
 					"volume": 15410000
 				},
-...
 				"hkex": {
 					"open": 70,
 					"low": 68.3,
@@ -76,7 +75,6 @@ http://127.0.0.1:8888/hsicomponents/quote
 					"close": 57.45,
 					"volume": 2610000
 				},
-...
 				"investtab": {
 					"open": 57.9,
 					"low": 57,
@@ -85,28 +83,7 @@ http://127.0.0.1:8888/hsicomponents/quote
 					"volume": 2613142
 				}
 			}
-		}, 
-...
-		{
-			"symbol": "00939.HK",
-			"quotes": {
-				"aastocks": {
-					"open": 7.39,
-					"low": 7.33,
-					"high": 7.42,
-					"close": 7.38,
-					"volume": 408770000
-				},
-...
-				"investtab": {
-					"open": 7.39,
-					"low": 7.33,
-					"high": 7.42,
-					"close": 7.38,
-					"volume": 408772500
-				}
-			}
-		}
+		}, ...
 	]
 }
 ```
@@ -114,4 +91,7 @@ http://127.0.0.1:8888/hsicomponents/quote
 ------------------
 
 ## Create and update quote to mysql database
+```
+./data-retriever-cli update <mysql_ip> <mysql_username> <mysql_password> -i <update_interval_in_seconds>
+```
 ![Screenshot](https://raw.githubusercontent.com/chanyk-joseph/dissertation/stock/data-retriever-cli/mysql_sample_content.PNG)
