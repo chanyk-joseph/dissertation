@@ -293,7 +293,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 
 # Create and update quote to mysql database
 ```
-./data-retriever-cli update &lt;mysql_ip&gt; &lt;db_name&gt; &lt;mysql_username&gt; &lt;mysql_password&gt; -i &lt;update_interval_in_seconds&gt;
+./data-retriever-cli update <mysql_ip> <db_name> <mysql_username> <mysql_password> -i <update_interval_in_seconds>
 ```
 (p.s. If the table 'stocks_quotes' does not exist, it will create one)
 ![Screenshot](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/mysql_sample_content.PNG)
