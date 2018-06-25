@@ -13,6 +13,7 @@ import (
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/gocolly/colly"
 	"github.com/oliveagle/jsonpath"
+	"github.com/vjeantet/jodaTime"
 )
 
 type PriceRecord struct {
@@ -32,7 +33,7 @@ func (p *PriceRecord) MarshalJSON() ([]byte, error) {
 		Date string `json:"date"`
 	}{
 		Alias: (*Alias)(p),
-		Date:  p.Date.Format("2006-01-02"),
+		Date:  jodaTime.Format("YYYY-MM-ddTHH:mm:ss.000Z", p.Date),
 	})
 }
 

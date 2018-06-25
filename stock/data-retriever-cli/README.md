@@ -14,12 +14,13 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 ---
 * [/quote/&lt;stock_symbol&gt;](#simple-quote)
 * [/quote/&lt;stock_symbol&gt;?raw=true](#raw-quote)
-* [/daily_history/&lt;stock_symbol&gt;?startdate=&lt;date&gt;&enddate=&lt;date&gt;](#daily-history)
+* [/history/&lt;stock_symbol&gt;?starttime=&lt;unix_time&gt;&endtime=&lt;unix_time&gt;&resolution=&lt;resolution&gt;](#daily-history)
 * [/hsicomponents](#hsi-components)
 * [/hsicomponents/quote](#hsi-components-quote)
 
 **&lt;stock_symbol&gt;**: 700, 0700, 00700, 700.HK, 700:HK etc <br/>
-**&lt;date&gt;**: YYYY-MM-dd, eg: 2018-12-31
+**&lt;unix_time&gt;**: Unix Epoch Time In Seconds, eg: 01 Jun 2018 00:00:00 => 1527811200
+**&lt;resolution&gt;**: day / 4hours / hour / 30minutes / 15minutes / 5minutes / minute
 
 #### Rest API Sample Responses
 ---
@@ -209,7 +210,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 ```
 
 ---
-###### <a name="daily-history"></a>http://127.0.0.1:8888/daily_history/700?startdate=2000-01-01&enddate=2018-06-24
+###### <a name="daily-history"></a>http://127.0.0.1:8888/history/700?resolution=day&starttime=946684800&endtime=1529971200
 ```json
 [{
 		"open": 0.875,
@@ -218,7 +219,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 		"close": 0.83,
 		"adjusted_close": 0.749649,
 		"volume": 2198875000,
-		"date": "2004-06-16"
+		"date": "2004-06-16T00:00:00.000+0000"
 	}, {
 		"open": 0.83,
 		"high": 0.875,
@@ -226,7 +227,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 		"close": 0.845,
 		"adjusted_close": 0.763197,
 		"volume": 419007500,
-		"date": "2004-06-17"
+		"date": "2004-06-17T00:00:00.000+0000"
 	}, ... {
 		"open": 395.600006,
 		"high": 400.399994,
@@ -234,7 +235,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 		"close": 397.399994,
 		"adjusted_close": 397.399994,
 		"volume": 20167800,
-		"date": "2018-06-22"
+		"date": "2018-06-22T00:00:00.000+0000"
 	}
 ]
 ```
