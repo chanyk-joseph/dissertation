@@ -19,7 +19,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 * [/hsicomponents/quote](#hsi-components-quote)
 
 **&lt;stock_symbol&gt;**: 700, 0700, 00700, 700.HK, 700:HK etc <br/>
-**&lt;unix_time&gt;**: Unix Epoch Time In Seconds, eg: 01 Jun 2018 00:00:00 => 1527811200
+**&lt;unix_time&gt;**: Unix Epoch Time In Seconds, eg: 01 Jun 2018 00:00:00 => 1527811200 <br/>
 **&lt;resolution&gt;**: day / 4hours / hour / 30minutes / 15minutes / 5minutes / minute
 
 #### Rest API Sample Responses
