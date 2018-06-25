@@ -14,7 +14,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 ---
 * [/quote/&lt;stock_symbol&gt;](#simple-quote)
 * [/quote/&lt;stock_symbol&gt;?raw=true](#raw-quote)
-* [/history/&lt;stock_symbol&gt;?starttime=&lt;unix_time&gt;&endtime=&lt;unix_time&gt;&resolution=&lt;resolution&gt;](#daily-history)
+* [/history/&lt;stock_symbol&gt;?starttime=&lt;unix_time&gt;&endtime=&lt;unix_time&gt;&resolution=&lt;resolution&gt;](#history)
 * [/hsicomponents](#hsi-components)
 * [/hsicomponents/quote](#hsi-components-quote)
 
@@ -210,7 +210,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 ```
 
 ---
-###### <a name="daily-history"></a>http://127.0.0.1:8888/history/700?resolution=day&starttime=946684800&endtime=1529971200
+###### <a name="history"></a>http://127.0.0.1:8888/history/700?resolution=day&starttime=946684800&endtime=1529971200
 ```json
 [{
 		"open": 0.875,
