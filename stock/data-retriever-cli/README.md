@@ -3,8 +3,8 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 
 ## Download
 [Windows-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_windows_x64.exe)<br/>
-[Linux-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_linux_x64.exe)<br/>
-[Mac-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_darwin_x64.exe)
+[Linux-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_linux_x64)<br/>
+[Mac-x64](https://raw.githubusercontent.com/chanyk-joseph/dissertation/master/stock/data-retriever-cli/data-retriever-cli_mac_x64)
 <br/>
 # Stock Quote Rest API Server Usage
 ```
