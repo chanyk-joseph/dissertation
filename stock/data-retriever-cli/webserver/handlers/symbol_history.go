@@ -89,7 +89,7 @@ func csvToObject(headers []string, lines [][]string) (result []map[string]interf
 }
 
 func guessTimeFormat(str string) (string, error) {
-	supporterTimeStr := []string{"YYYY-MM-ddTHH:mm:ss", "YYYY-MM-dd HH:mm:ss", "dd-MM-YYYY HH:mm:ss", "YYYY-MM-dd", "YYYY.MM.dd", "dd-MM-YYYY", "dd.MM.YYYY"}
+	supporterTimeStr := []string{"YYYY-MM-ddTHH:mm:ss", "YYYY-MM-dd HH:mm:ss", "dd-MM-YYYY HH:mm:ss", "YYYY/MM/dd", "YYYY-MM-dd", "YYYY.MM.dd", "dd/MM/YYYY", "dd-MM-YYYY", "dd.MM.YYYY"}
 	targetTimeFormat := ""
 	for _, timeFormatStr := range supporterTimeStr {
 		if _, err := jodaTime.Parse(timeFormatStr, str); err == nil {

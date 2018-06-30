@@ -14,7 +14,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 ---
 * [/quote/&lt;stock_symbol&gt;](#simple-quote)
 * [/quote/&lt;stock_symbol&gt;?raw=true](#raw-quote)
-* [/history/&lt;stock_symbol&gt;?starttime=&lt;unix_time&gt;&endtime=&lt;unix_time&gt;&resolution=&lt;resolution&gt;&provider=&lt;[provider]&gt;](#history)
+* [/history/&lt;stock_symbol&gt;?starttime=&lt;unix_time&gt;&endtime=&lt;unix_time&gt;&resolution=&lt;resolution&gt;&provider=&lt;provider&gt;](#history)
 * [/hsicomponents](#hsi-components)
 * [/hsicomponents/quote](#hsi-components-quote)
 
