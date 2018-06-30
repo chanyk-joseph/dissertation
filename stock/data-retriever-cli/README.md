@@ -246,7 +246,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 ###### <a name="use-local-csv-history"></a>http://127.0.0.1:8888/history/700?starttime=946684800&endtime=1529971200&provider=./local-sample-csvs
 Assumptions:
 * The symbol is the sub-folder name under the local provider folder
-* Example Folder: https://github.com/chanyk-joseph/dissertation/tree/master/stock/local-sample-csvs
+* Example Folder: https://github.com/chanyk-joseph/dissertation/tree/master/stock/data-retriever-cli/local-sample-csvs
 * The csv file name must in one of this format: ["YYYY-MM-ddTHH:mm:ss", "YYYY-MM-dd HH:mm:ss", "dd-MM-YYYY HH:mm:ss", "YYYY/MM/dd", "YYYY-MM-dd", "YYYY.MM.dd", "dd/MM/YYYY", "dd-MM-YYYY", "dd.MM.YYYY"]
 * The first row of each CSV is the header
 * The first column of each CSV is the time which must be in one of this format: ["YYYY-MM-ddTHH:mm:ss", "YYYY-MM-dd HH:mm:ss", "dd-MM-YYYY HH:mm:ss", "YYYY/MM/dd", "YYYY-MM-dd", "YYYY.MM.dd", "dd/MM/YYYY", "dd-MM-YYYY", "dd.MM.YYYY"]
