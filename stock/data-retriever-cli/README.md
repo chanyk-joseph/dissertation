@@ -22,7 +22,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 **&lt;unix_time&gt;**: Unix Epoch Time In Seconds, eg: 01 Jun 2018 00:00:00 => 1527811200 <br/>
 **&lt;resolution&gt;**: day / 4hours / hour / 30minutes / 15minutes / 5minutes / minute (p.s. default = day) <br/>
 **&lt;provider&gt;**: yahoo / &lt;local-folder-path&gt; (p.s. default = yahoo) <br/>
-**&lt;local-folder-path&gt;**: eg: /tmp/local-sample-csvs
+**&lt;local-folder-path&gt;**: The parent folder which stores the stock CSV, &lt;folder&lgt;/&lt;symbol&lgt;/*.csv eg: [/tmp/local-sample-csvs](https://github.com/chanyk-joseph/dissertation/tree/master/stock/local-sample-csvs)
 
 #### Rest API Sample Responses
 ---
