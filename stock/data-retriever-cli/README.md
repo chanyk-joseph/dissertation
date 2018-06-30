@@ -22,7 +22,7 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 **&lt;unix_time&gt;**: Unix Epoch Time In Seconds, eg: 01 Jun 2018 00:00:00 => 1527811200 <br/>
 **&lt;resolution&gt;**: day / 4hours / hour / 30minutes / 15minutes / 5minutes / minute (p.s. default = day) <br/>
 **&lt;provider&gt;**: yahoo / &lt;local-folder-path&gt; (p.s. default = yahoo) <br/>
-**&lt;local-folder-path&gt;**: The parent folder which stores the stock CSV; Structure: &lt;folder&gt;/&lt;symbol&gt;/*.csv eg: [/tmp/local-sample-csvs](https://github.com/chanyk-joseph/dissertation/tree/master/stock/local-sample-csvs)
+**&lt;local-folder-path&gt;**: The local parent folder which stores the CSV files. (p.s. Use to serve data from local CSV files)
 
 #### Rest API Sample Responses
 ---
@@ -238,6 +238,76 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 		"adjusted_close": 397.399994,
 		"volume": 20167800,
 		"date": "2018-06-22T00:00:00.000+0000"
+	}
+]
+```
+
+---
+###### <a name="use-local-csv-history"></a>http://127.0.0.1:8888/history/700?starttime=946684800&endtime=1529971200&provider=./local-sample-csvs
+Assumptions:
+* The symbol is the sub-folder name under the local provider folder
+* Example Folder: https://github.com/chanyk-joseph/dissertation/tree/master/stock/local-sample-csvs
+* The csv file name must in one of this format: ["YYYY-MM-ddTHH:mm:ss", "YYYY-MM-dd HH:mm:ss", "dd-MM-YYYY HH:mm:ss", "YYYY/MM/dd", "YYYY-MM-dd", "YYYY.MM.dd", "dd/MM/YYYY", "dd-MM-YYYY", "dd.MM.YYYY"]
+* The first row of each CSV is the header
+* The first column of each CSV is the time which must be in one of this format: ["YYYY-MM-ddTHH:mm:ss", "YYYY-MM-dd HH:mm:ss", "dd-MM-YYYY HH:mm:ss", "YYYY/MM/dd", "YYYY-MM-dd", "YYYY.MM.dd", "dd/MM/YYYY", "dd-MM-YYYY", "dd.MM.YYYY"]
+```json
+[{
+		"Amount": "0.00",
+		"BP1": "20857",
+		"BV1": "2",
+		"High": "21019",
+		"LastClose": "20854",
+		"Low": "20820",
+		"Open": "20820",
+		"OpenInt": "6810",
+		"Price": "20862",
+		"Price2": "0.00000",
+		"Price3": "20855",
+		"SP1": "20861",
+		"SV1": "3",
+		"Time": "2017-05-20 09:15:11",
+		"TotalAmount": "0.000",
+		"TotalVol": "8328",
+		"Volume": "11",
+		"isBuy": "1"
+	}, {
+		"Amount": "0.00",
+		"BP1": "20857",
+		"BV1": "2",
+		"High": "21019",
+		"LastClose": "20854",
+		"Low": "20820",
+		"Open": "20820",
+		"OpenInt": "6810",
+		"Price": "20857",
+		"Price2": "0.00000",
+		"Price3": "20855",
+		"SP1": "20861",
+		"SV1": "3",
+		"Time": "2017-05-20 09:15:11",
+		"TotalAmount": "0.000",
+		"TotalVol": "8338",
+		"Volume": "10",
+		"isBuy": "0"
+	}, ... {
+		"Amount": "0.00",
+		"BP1": "20857",
+		"BV1": "2",
+		"High": "21019",
+		"LastClose": "20854",
+		"Low": "20820",
+		"Open": "20820",
+		"OpenInt": "6810",
+		"Price": "20855",
+		"Price2": "0.00000",
+		"Price3": "20855",
+		"SP1": "20861",
+		"SV1": "3",
+		"Time": "2017-05-20 09:15:12",
+		"TotalAmount": "0.000",
+		"TotalVol": "8352",
+		"Volume": "14",
+		"isBuy": "0"
 	}
 ]
 ```
