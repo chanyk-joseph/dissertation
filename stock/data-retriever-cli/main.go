@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	CLIUtils "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/utils"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -25,14 +27,14 @@ var (
 func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case serverCommand.FullCommand():
-		webserver := SetupWebserver()
+		webServer := webserver.SetupWebserver()
 
 		baseURL := "http://127.0.0.1:" + strconv.Itoa(*serverPort)
 		fmt.Println(baseURL + "/hsicomponents | Get a list of HSI components")
 		fmt.Println(baseURL + "/hsicomponents/quote | Get quotes for all HSI components stocks")
 		fmt.Println(baseURL + "/quote/<symbol> | Supported symbol format: 700, 00700, 700:HK, etc.>")
 
-		webserver.Start(":" + strconv.Itoa(*serverPort))
+		webServer.Start(":" + strconv.Itoa(*serverPort))
 	case dbUpdateCommand.FullCommand():
 		fmt.Println("Update Interval: " + strconv.Itoa(*updateIntervalInSeconds) + "s")
 		ticker := time.NewTicker(time.Duration(*updateIntervalInSeconds) * time.Second)
@@ -41,7 +43,7 @@ func main() {
 				select {
 				case <-ticker.C:
 					fmt.Println("Start Updating Database")
-					UpdateDatabase(*dbServerAddr, *dbUsername, *dbPassword, *dbName)
+					CLIUtils.UpdateDatabase(*dbServerAddr, *dbUsername, *dbPassword, *dbName)
 				}
 			}
 		}()

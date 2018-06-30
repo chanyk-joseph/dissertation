@@ -14,13 +14,15 @@ A single executable for serving quote requests via RestAPI / updating HSI compon
 ---
 * [/quote/&lt;stock_symbol&gt;](#simple-quote)
 * [/quote/&lt;stock_symbol&gt;?raw=true](#raw-quote)
-* [/history/&lt;stock_symbol&gt;?starttime=&lt;unix_time&gt;&endtime=&lt;unix_time&gt;&resolution=&lt;resolution&gt;](#history)
+* [/history/&lt;stock_symbol&gt;?starttime=&lt;unix_time&gt;&endtime=&lt;unix_time&gt;&resolution=&lt;resolution&gt;&provider=&lt;[provider]&gt;](#history)
 * [/hsicomponents](#hsi-components)
 * [/hsicomponents/quote](#hsi-components-quote)
 
 **&lt;stock_symbol&gt;**: 700, 0700, 00700, 700.HK, 700:HK etc <br/>
 **&lt;unix_time&gt;**: Unix Epoch Time In Seconds, eg: 01 Jun 2018 00:00:00 => 1527811200 <br/>
-**&lt;resolution&gt;**: day / 4hours / hour / 30minutes / 15minutes / 5minutes / minute
+**&lt;resolution&gt;**: day / 4hours / hour / 30minutes / 15minutes / 5minutes / minute (p.s. default = day) <br/>
+**&lt;provider&gt;**: yahoo / &lt;local-folder-path&gt; (p.s. default = yahoo) <br/>
+**&lt;local-folder-path&gt;**: eg: /tmp/local-sample-csvs
 
 #### Rest API Sample Responses
 ---

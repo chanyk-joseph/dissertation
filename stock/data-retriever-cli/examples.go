@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	CLIUtils "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/utils"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/bloomberg"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
@@ -108,13 +109,13 @@ func Examples() {
 	fmt.Println(str.Symbol)
 
 	{
-		_, q, _ := GetQuoteFromAllProviders(utils.NewStandardSymbol("00001.HK"))
+		_, q, _ := CLIUtils.GetQuoteFromAllProviders(utils.NewStandardSymbol("00001.HK"))
 		fmt.Println(utils.ObjectToJSONString(q))
 
-		r, _, _ := GetQuoteFromAllProviders(utils.NewStandardSymbol("00762.HK"))
+		r, _, _ := CLIUtils.GetQuoteFromAllProviders(utils.NewStandardSymbol("00762.HK"))
 		fmt.Println(utils.ObjectToJSONString(r))
 
-		hsiQ, _ := GetQuotesOfHSIComponents()
+		hsiQ, _ := CLIUtils.GetQuotesOfHSIComponents()
 		fmt.Println(utils.ObjectToJSONString(hsiQ))
 	}
 }
