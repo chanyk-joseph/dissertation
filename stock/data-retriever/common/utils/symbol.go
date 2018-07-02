@@ -21,6 +21,10 @@ func NewStandardSymbol(symbol string) models.StandardSymbol {
 
 // ConvertToStandardSymbol converts non-standard symbol(eg: 700, 0700, 700.HK) to standard symbol(eg: 00700.HK), i.e. <5 digits stock code>.HK
 func ConvertToStandardSymbol(symbol string) (string, error) {
+	if symbol == "HSI" {
+		return "HSI", nil
+	}
+
 	code, err := ExtractStockCode(symbol)
 	if err != nil {
 		return "", err

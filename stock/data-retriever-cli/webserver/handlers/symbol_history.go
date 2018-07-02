@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/common"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/yahoo"
 	"github.com/labstack/echo"
@@ -32,12 +33,12 @@ func SymbolHistoryHandler(c echo.Context) error {
 	endTime := int(time.Now().Unix())
 	if startTimeStr != "" {
 		if startTime, err = strconv.Atoi(startTimeStr); err != nil {
-			return c.JSON(500, ErrorWrapper{err.Error()})
+			return c.JSON(500, common.ErrorWrapper{err.Error()})
 		}
 	}
 	if endTimeStr != "" {
 		if endTime, err = strconv.Atoi(endTimeStr); err != nil {
-			return c.JSON(500, ErrorWrapper{err.Error()})
+			return c.JSON(500, common.ErrorWrapper{err.Error()})
 		}
 	}
 	startTimeUTC := time.Unix(int64(startTime), 0).UTC()
@@ -46,34 +47,34 @@ func SymbolHistoryHandler(c echo.Context) error {
 	if dataProvider == "" || dataProvider == "yahoo" {
 		stockSymbol, err := utils.ConvertToStandardSymbol(symbolStr)
 		if err != nil {
-			return c.JSON(500, ErrorWrapper{err.Error()})
+			return c.JSON(500, common.ErrorWrapper{err.Error()})
 		}
 
 		var dayResult []yahoo.PriceRecord
 		dayResult, err = yahoo.GetPriceRecords(utils.NewStandardSymbol(stockSymbol), startTimeUTC, endTimeUTC)
 		if err != nil {
-			return c.JSON(500, ErrorWrapper{err.Error()})
+			return c.JSON(500, common.ErrorWrapper{err.Error()})
 		}
-		return c.JSON(200, genFakeDate(dayResult, requestDataInterval))
+		return c.JSON(200, genFakeData(dayResult, requestDataInterval))
 	}
 
 	if _, err := os.Stat(dataProvider); err != nil {
-		return c.JSON(500, ErrorWrapper{"Unkonw Data Provider: " + dataProvider})
+		return c.JSON(500, common.ErrorWrapper{"Unkonw Data Provider: " + dataProvider})
 	}
 	targetFolder, _ := filepath.Abs(filepath.Join(dataProvider, symbolStr))
 	if hasFolder(targetFolder) {
 		files, _ := filepath.Glob(filepath.Join(targetFolder, "*.csv"))
 		if len(files) == 0 {
-			return c.JSON(404, ErrorWrapper{"CSV Files Not Found"})
+			return c.JSON(404, common.ErrorWrapper{"CSV Files Not Found"})
 		}
 		csvFiles, _ := getCSVFiles(targetFolder, startTimeUTC, endTimeUTC)
 		headers, lines, err := loadAndMergeCSVs(csvFiles, startTimeUTC, endTimeUTC)
 		if err != nil {
-			return c.JSON(500, ErrorWrapper{err.Error()})
+			return c.JSON(500, common.ErrorWrapper{err.Error()})
 		}
 		return c.JSON(200, csvToObject(headers, lines))
 	}
-	return c.JSON(500, ErrorWrapper{fmt.Sprintf("Symbol(%s) Not Available For Provider(%s)", symbolStr, dataProvider)})
+	return c.JSON(500, common.ErrorWrapper{fmt.Sprintf("Symbol(%s) Not Available For Provider(%s)", symbolStr, dataProvider)})
 }
 
 func csvToObject(headers []string, lines [][]string) (result []map[string]interface{}) {
@@ -194,7 +195,7 @@ func hasFolder(path string) bool {
 	return false
 }
 
-func genFakeDate(dayData []yahoo.PriceRecord, interval time.Duration) (result []yahoo.PriceRecord) {
+func genFakeData(dayData []yahoo.PriceRecord, interval time.Duration) (result []yahoo.PriceRecord) {
 	totalRecordPerDay := time.Hour * time.Duration(24) / interval
 	for _, p := range dayData {
 		for j := 0; j < int(totalRecordPerDay); j++ {

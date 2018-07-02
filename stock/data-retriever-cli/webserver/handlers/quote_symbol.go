@@ -2,6 +2,7 @@ package handlers
 
 import (
 	CLIUtils "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/utils"
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/common"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/models"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/labstack/echo"
@@ -10,7 +11,7 @@ import (
 func QuoteSymbolHandler(c echo.Context) error {
 	stockSymbol, err := utils.ConvertToStandardSymbol(c.Param("symbol"))
 	if err != nil {
-		return c.JSON(500, ErrorWrapper{err.Error()})
+		return c.JSON(500, common.ErrorWrapper{err.Error()})
 	}
 	bShowRaw := false
 	tmp := c.FormValue("raw")
@@ -34,5 +35,5 @@ func QuoteSymbolHandler(c echo.Context) error {
 		}
 		return c.JSON(200, q)
 	}
-	return c.JSON(404, ErrorWrapper{err.Error()})
+	return c.JSON(404, common.ErrorWrapper{err.Error()})
 }

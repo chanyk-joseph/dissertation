@@ -2,6 +2,7 @@ package webserver
 
 import (
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/handlers"
+	tv "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/tradingview_handlers"
 
 	CLIUtils "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/utils"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
@@ -44,5 +45,14 @@ func SetupWebserver() *echo.Echo {
 	e.GET("/quote/:symbol", handlers.QuoteSymbolHandler)
 	e.GET("/history/:symbol", handlers.SymbolHistoryHandler)
 
+	setupTradingviewAPI(e)
+
 	return e
+}
+
+func setupTradingviewAPI(e *echo.Echo) {
+	e.GET("/tradingview-udf-api/config", tv.ConfigHandler)
+	e.GET("/tradingview-udf-api/symbol", tv.SymbolHandler)
+	e.GET("/tradingview-udf-api/search", tv.SearchHandler)
+	e.GET("/tradingview-udf-api/history", tv.HistoryHandler)
 }

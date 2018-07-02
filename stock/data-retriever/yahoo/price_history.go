@@ -2,7 +2,6 @@ package yahoo
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -40,10 +39,13 @@ func (p *PriceRecord) MarshalJSON() ([]byte, error) {
 func GetPriceRecords(standardSymbol models.StandardSymbol, startTime time.Time, endTime time.Time) ([]PriceRecord, error) {
 	result := []PriceRecord{}
 	symbol := standardSymbol.Symbol[1:]
+	if standardSymbol.Symbol == "HSI" {
+		symbol = "%5EHSI"
+	}
 
 	c := colly.NewCollector()
 	detailCollector := c.Clone()
-
+	var parseError error
 	c.OnHTML("html", func(e *colly.HTMLElement) {
 		if e.Response.StatusCode != http.StatusOK {
 			return
@@ -59,7 +61,8 @@ func GetPriceRecords(standardSymbol models.StandardSymbol, startTime time.Time, 
 		json.Unmarshal([]byte(jsonStr), &obj)
 		res, err := jsonpath.JsonPathLookup(obj, "$.context.dispatcher.stores.CrumbStore.crumb")
 		if err != nil {
-			panic(err)
+			parseError = err
+			return
 		}
 		accessToken := res.(string)
 
@@ -82,7 +85,8 @@ func GetPriceRecords(standardSymbol models.StandardSymbol, startTime time.Time, 
 			var err error
 			priceRecord := PriceRecord{}
 			if priceRecord.Date, err = time.Parse(time.RFC3339, rowData[0]+"T00:00:00.000Z"); err != nil {
-				panic(err)
+				parseError = err
+				return
 			}
 			priceRecord.Open = utils.StringToFloat64(rowData[1])
 			priceRecord.High = utils.StringToFloat64(rowData[2])
@@ -95,11 +99,14 @@ func GetPriceRecords(standardSymbol models.StandardSymbol, startTime time.Time, 
 		}
 	})
 
-	urlStr := fmt.Sprintf("https://finance.yahoo.com/quote/%s/history?period1=%d&period2=%d&interval=1d&filter=history&frequency=1d", symbol, startTime.Unix(), endTime.Unix())
+	urlStr := fmt.Sprintf("https://finance.yahoo.com/quote/%s/history", symbol)
 	c.Visit(urlStr)
 
+	if parseError != nil {
+		return result, fmt.Errorf("Unable To Get Stock Price History For %s: \n%s", symbol, parseError.Error())
+	}
 	if len(result) == 0 {
-		return result, errors.New("Unable To Get Stock Price History For " + symbol)
+		return result, fmt.Errorf("Unable To Get Stock Price History For %s", symbol)
 	}
 
 	return result, nil
