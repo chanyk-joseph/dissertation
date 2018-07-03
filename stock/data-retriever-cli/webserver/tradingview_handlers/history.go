@@ -73,6 +73,9 @@ func genFakeData(dayData []yahoo.PriceRecord, interval time.Duration) (result []
 				lastMonth = p.Date.Month()
 			}
 		}
+	} else if interval == time.Duration(24)*time.Hour && len(dayData) > 0 {
+		// D
+		return dayData
 	} else {
 		for i, p := range dayData {
 			if i == 0 {
@@ -87,6 +90,7 @@ func genFakeData(dayData []yahoo.PriceRecord, interval time.Duration) (result []
 					record.Low = p.Low
 					record.High = p.High
 					record.Close = p.Close
+					record.Volume = p.Volume
 					record.AdjustedClose = p.AdjustedClose
 					result = append(result, record)
 				}

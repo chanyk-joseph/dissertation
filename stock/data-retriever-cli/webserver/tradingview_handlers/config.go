@@ -16,7 +16,7 @@ func ConfigHandler(c echo.Context) error {
 		],
 		"supports_group_request": false,
 		"supports_marks": false,
-		"supports_search": false,
+		"supports_search": true,
 		"supports_timescale_marks": false
 	 }`)
 	return c.JSONBlob(200, resp)

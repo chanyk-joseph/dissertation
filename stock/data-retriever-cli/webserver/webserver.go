@@ -1,6 +1,9 @@
 package webserver
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/handlers"
 	tv "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/tradingview_handlers"
 
@@ -52,7 +55,16 @@ func SetupWebserver() *echo.Echo {
 
 func setupTradingviewAPI(e *echo.Echo) {
 	e.GET("/tradingview-udf-api/config", tv.ConfigHandler)
-	e.GET("/tradingview-udf-api/symbol", tv.SymbolHandler)
+	e.GET("/tradingview-udf-api/symbols", tv.SymbolHandler)
 	e.GET("/tradingview-udf-api/search", tv.SearchHandler)
 	e.GET("/tradingview-udf-api/history", tv.HistoryHandler)
+	e.GET("/tradingview-udf-api/quotes", tv.QuotesHandler)
+
+	e.GET("/tradingview-udf-api/time", func(c echo.Context) error {
+		return c.String(200, strconv.Itoa(int(time.Now().UTC().Unix())))
+	})
+
+	// TBD
+	// e.GET("/tradingview-udf-api/marks", tv.TBD)
+	// e.GET("/tradingview-udf-api/timescale_marks", tv.TBD)
 }
