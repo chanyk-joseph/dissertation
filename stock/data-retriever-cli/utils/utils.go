@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 	"sync"
 	"time"
 
@@ -29,6 +30,41 @@ func init() {
 type quote struct {
 	Standard models.StandardQuoteFromAllProviders
 	Raw      models.RawQuoteFromAllProviders
+}
+
+func ArrToUDF(inputArr interface{}, customFieldName map[string]string) (result map[string]interface{}) {
+	tmp := reflect.ValueOf(inputArr)
+	if tmp.Kind() != reflect.Slice {
+		panic("inputArr is not a array")
+	}
+	arr := make([]interface{}, tmp.Len())
+	for i := 0; i < tmp.Len(); i++ {
+		arr[i] = tmp.Index(i).Interface()
+	}
+
+	if len(arr) == 0 {
+		result["s"] = "error"
+		result["error"] = "Cannot convert to UDF format because no element in the array"
+		return result
+	}
+
+	s := reflect.ValueOf(&arr[0]).Elem()
+	typeOfObj := s.Type()
+
+	for i := 0; i < s.NumField(); i++ {
+		fieldName := typeOfObj.Field(i).Name
+		if customName, ok := customFieldName[fieldName]; ok {
+			fieldName = customName
+		}
+
+		result[fieldName] = []interface{}{}
+		for j := 0; j < len(arr); j++ {
+			s2 := reflect.ValueOf(&arr[j]).Elem()
+			result[fieldName] = append(result[fieldName].([]interface{}), s2.Field(i).Interface())
+		}
+	}
+
+	return result
 }
 
 func GetQuoteFromAllProviders(symbol models.StandardSymbol) (models.RawQuoteFromAllProviders, models.StandardQuoteFromAllProviders, error) {
