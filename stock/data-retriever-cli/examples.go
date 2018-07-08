@@ -137,8 +137,9 @@ func Examples() {
 		customTranslateFuncs := map[string]CLIUtils.TranslateFunction{"Date": timeToEpochSeconds}
 		result := CLIUtils.ArrToUDF(dayResult, customFieldNames, customTranslateFuncs)
 		fmt.Println(utils.ObjectToJSONString(result))
-		fmt.Println("Press the Enter Key To Stop")
-		var input string
-		fmt.Scanln(&input)
 	}
+
+	fmt.Println("Press the Enter Key To Stop")
+	var input string
+	fmt.Scanln(&input)
 }

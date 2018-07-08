@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	CLIUtils "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/utils"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/yahoo"
 	"github.com/labstack/echo"
@@ -38,24 +39,31 @@ func HistoryHandler(c echo.Context) error {
 		return c.JSON(200, errStruct{"no_data", nil, &t})
 	}
 
-	type tmpObj struct {
-		Status  string    `json:"s"`
-		BarTime []int64   `json:"t"`
-		Close   []float64 `json:"c"`
-		Open    []float64 `json:"o"`
-		High    []float64 `json:"h"`
-		Low     []float64 `json:"l"`
-		Volume  []int64   `json:"v"`
+	timeToEpochSeconds := func(input interface{}) interface{} {
+		return input.(time.Time).Unix()
 	}
-	result := tmpObj{Status: "ok"}
-	for _, o := range tmpResult {
-		result.BarTime = append(result.BarTime, o.Date.Unix())
-		result.Close = append(result.Close, o.AdjustedClose)
-		result.Open = append(result.Open, o.Open)
-		result.High = append(result.High, o.High)
-		result.Low = append(result.Low, o.Low)
-		result.Volume = append(result.Volume, o.Volume)
-	}
+	customFieldNames := map[string]string{"Date": "t", "Open": "o", "High": "h", "Low": "l", "AdjustedClose": "c", "Volume": "v"}
+	customTranslateFuncs := map[string]CLIUtils.TranslateFunction{"Date": timeToEpochSeconds}
+	result := CLIUtils.ArrToUDF(tmpResult, customFieldNames, customTranslateFuncs)
+
+	// type tmpObj struct {
+	// 	Status  string    `json:"s"`
+	// 	BarTime []int64   `json:"t"`
+	// 	Close   []float64 `json:"c"`
+	// 	Open    []float64 `json:"o"`
+	// 	High    []float64 `json:"h"`
+	// 	Low     []float64 `json:"l"`
+	// 	Volume  []int64   `json:"v"`
+	// }
+	// result := tmpObj{Status: "ok"}
+	// for _, o := range tmpResult {
+	// 	result.BarTime = append(result.BarTime, o.Date.Unix())
+	// 	result.Close = append(result.Close, o.AdjustedClose)
+	// 	result.Open = append(result.Open, o.Open)
+	// 	result.High = append(result.High, o.High)
+	// 	result.Low = append(result.Low, o.Low)
+	// 	result.Volume = append(result.Volume, o.Volume)
+	// }
 
 	return c.JSON(200, result)
 }
