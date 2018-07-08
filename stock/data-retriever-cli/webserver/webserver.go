@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/embeded_tradingview_html"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/handlers"
 	tv "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/tradingview_handlers"
 
@@ -27,7 +28,7 @@ func SetupWebserver() *echo.Echo {
 		Level: 1,
 	}))
 	e.GET("/", func(c echo.Context) error {
-		return c.HTML(200, string("Joseph Stock Server"))
+		return c.HTML(200, string("Joseph Stock API Server"))
 	})
 	e.GET("/hsicomponents", func(c echo.Context) error {
 		stockSymbols, err := aastocks.GetHSIConstituentsCodes()
@@ -51,6 +52,7 @@ func SetupWebserver() *echo.Echo {
 	e.GET("/history/:symbol", handlers.SymbolHistoryHandler)
 
 	setupTradingviewAPI(e)
+	setupTradingviewUI(e)
 
 	return e
 }
@@ -69,4 +71,8 @@ func setupTradingviewAPI(e *echo.Echo) {
 	// TBD
 	// e.GET("/tradingview-udf-api/marks", tv.TBD)
 	// e.GET("/tradingview-udf-api/timescale_marks", tv.TBD)
+}
+
+func setupTradingviewUI(e *echo.Echo) {
+	e.GET("/chart/*", echo.WrapHandler(embeded_tradingview_html.Handler))
 }
