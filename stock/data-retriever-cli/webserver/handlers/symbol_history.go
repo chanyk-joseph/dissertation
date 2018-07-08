@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	CLIUtils "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/utils"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/common"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever/yahoo"
@@ -62,7 +63,7 @@ func SymbolHistoryHandler(c echo.Context) error {
 		return c.JSON(500, common.ErrorWrapper{"Unkonw Data Provider: " + dataProvider})
 	}
 	targetFolder, _ := filepath.Abs(filepath.Join(dataProvider, symbolStr))
-	if hasFolder(targetFolder) {
+	if CLIUtils.HasFolder(targetFolder) {
 		files, _ := filepath.Glob(filepath.Join(targetFolder, "*.csv"))
 		if len(files) == 0 {
 			return c.JSON(404, common.ErrorWrapper{"CSV Files Not Found"})
@@ -182,17 +183,6 @@ func getCSVFiles(folderPath string, startTime time.Time, endTime time.Time) (res
 	}
 
 	return result, nil
-}
-
-func hasFolder(path string) bool {
-	targetFolder, err := filepath.Abs(path)
-	if err != nil {
-		return false
-	}
-	if fi, err := os.Stat(targetFolder); err == nil && fi.IsDir() {
-		return true
-	}
-	return false
 }
 
 func genFakeData(dayData []yahoo.PriceRecord, interval time.Duration) (result []yahoo.PriceRecord) {

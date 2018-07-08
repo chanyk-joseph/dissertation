@@ -68,6 +68,10 @@ func setupTradingviewAPI(e *echo.Echo) {
 		return c.String(200, strconv.Itoa(int(time.Now().UTC().Unix())))
 	})
 
+	e.GET("/tradingview-storage-api/1.1/charts", tv.GetChartHandler)
+	e.POST("/tradingview-storage-api/1.1/charts", tv.PostChartHandler)
+	e.DELETE("/tradingview-storage-api/1.1/charts", tv.DeleteChartHandler)
+
 	// TBD
 	// e.GET("/tradingview-udf-api/marks", tv.TBD)
 	// e.GET("/tradingview-udf-api/timescale_marks", tv.TBD)

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"reflect"
 	"sync"
 	"time"
@@ -74,6 +76,24 @@ func ArrToUDF(inputArr interface{}, customFieldName map[string]string, customTra
 		result[v] = tmpArr
 	}
 	return result
+}
+
+func HasFolder(path string) bool {
+	targetFolder, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	if fi, err := os.Stat(targetFolder); err == nil && fi.IsDir() {
+		return true
+	}
+	return false
+}
+
+func CreateFolderIfNotExist(path string) error {
+	if !HasFolder(path) {
+		return os.Mkdir(path, os.ModePerm)
+	}
+	return nil
 }
 
 func GetQuoteFromAllProviders(symbol models.StandardSymbol) (models.RawQuoteFromAllProviders, models.StandardQuoteFromAllProviders, error) {
