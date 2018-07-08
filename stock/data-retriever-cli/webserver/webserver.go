@@ -23,6 +23,8 @@ func SetupWebserver() *echo.Echo {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
+	}), middleware.GzipWithConfig(middleware.GzipConfig{
+		Level: 1,
 	}))
 	e.GET("/", func(c echo.Context) error {
 		return c.HTML(200, string("Joseph Stock Server"))
