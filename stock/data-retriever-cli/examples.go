@@ -118,4 +118,27 @@ func Examples() {
 		hsiQ, _ := CLIUtils.GetQuotesOfHSIComponents()
 		fmt.Println(utils.ObjectToJSONString(hsiQ))
 	}
+
+	{
+		startTimeUTC := time.Unix(int64(1530457035), 0).UTC()
+		endTimeUTC := time.Unix(int64(1530716235), 0).UTC()
+		var dayResult []yahoo.PriceRecord
+		var err error
+		dayResult, err = yahoo.GetPriceRecords(utils.NewStandardSymbol("700"), startTimeUTC, endTimeUTC)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(utils.ObjectToJSONString(dayResult))
+
+		timeToEpochSeconds := func(input interface{}) interface{} {
+			return input.(time.Time).Unix()
+		}
+		customFieldNames := map[string]string{"Date": "t", "Open": "o", "High": "h", "Low": "l", "AdjustedClose": "c", "Volume": "v"}
+		customTranslateFuncs := map[string]CLIUtils.TranslateFunction{"Date": timeToEpochSeconds}
+		result := CLIUtils.ArrToUDF(dayResult, customFieldNames, customTranslateFuncs)
+		fmt.Println(utils.ObjectToJSONString(result))
+		fmt.Println("Press the Enter Key To Stop")
+		var input string
+		fmt.Scanln(&input)
+	}
 }

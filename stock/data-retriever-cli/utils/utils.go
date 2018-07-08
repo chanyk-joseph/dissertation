@@ -27,12 +27,22 @@ func init() {
 	cache = ccache.New(ccache.Configure())
 }
 
+type TranslateFunction func(interface{}) interface{}
+
 type quote struct {
 	Standard models.StandardQuoteFromAllProviders
 	Raw      models.RawQuoteFromAllProviders
 }
 
-func ArrToUDF(inputArr interface{}, customFieldName map[string]string) (result map[string]interface{}) {
+func ArrToUDF(inputArr interface{}, customFieldName map[string]string, customTranslateFunc map[string]TranslateFunction) (result map[string]interface{}) {
+	result = map[string]interface{}{}
+	defer func() { //catch or finally
+		if err := recover(); err != nil {
+			result["s"] = "error"
+			result["errmsg"] = err
+		}
+	}()
+
 	tmp := reflect.ValueOf(inputArr)
 	if tmp.Kind() != reflect.Slice {
 		panic("inputArr is not a array")
@@ -48,22 +58,21 @@ func ArrToUDF(inputArr interface{}, customFieldName map[string]string) (result m
 		return result
 	}
 
-	s := reflect.ValueOf(&arr[0]).Elem()
-	typeOfObj := s.Type()
-
-	for i := 0; i < s.NumField(); i++ {
-		fieldName := typeOfObj.Field(i).Name
-		if customName, ok := customFieldName[fieldName]; ok {
-			fieldName = customName
+	result["s"] = "ok"
+	for k, v := range customFieldName {
+		tmpArr := []interface{}{}
+		translateFunc, hasTranslateFunc := customTranslateFunc[k]
+		for _, obj := range arr {
+			r := reflect.ValueOf(obj)
+			f := reflect.Indirect(r).FieldByName(k)
+			if hasTranslateFunc {
+				tmpArr = append(tmpArr, translateFunc(f.Interface()))
+				continue
+			}
+			tmpArr = append(tmpArr, f.Interface())
 		}
-
-		result[fieldName] = []interface{}{}
-		for j := 0; j < len(arr); j++ {
-			s2 := reflect.ValueOf(&arr[j]).Elem()
-			result[fieldName] = append(result[fieldName].([]interface{}), s2.Field(i).Interface())
-		}
+		result[v] = tmpArr
 	}
-
 	return result
 }
 

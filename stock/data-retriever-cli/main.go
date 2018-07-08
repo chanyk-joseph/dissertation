@@ -8,8 +8,6 @@ import (
 
 	CLIUtils "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/utils"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/yahoo"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -27,20 +25,6 @@ var (
 )
 
 func main() {
-	startTimeUTC := time.Unix(int64(1530457035), 0).UTC()
-	endTimeUTC := time.Unix(int64(1530716235), 0).UTC()
-	var dayResult []yahoo.PriceRecord
-	var err error
-	dayResult, err = yahoo.GetPriceRecords(utils.NewStandardSymbol("700"), startTimeUTC, endTimeUTC)
-	if err != nil {
-		panic(err)
-	}
-	result := CLIUtils.ArrToUDF(dayResult, map[string]string{})
-	fmt.Println(utils.ObjectToJSONString(result))
-	fmt.Println("Press the Enter Key To Stop")
-	var input string
-	fmt.Scanln(&input)
-
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case serverCommand.FullCommand():
 		webServer := webserver.SetupWebserver()
