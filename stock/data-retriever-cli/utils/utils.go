@@ -89,6 +89,17 @@ func HasFolder(path string) bool {
 	return false
 }
 
+func HasFile(path string) bool {
+	targetFile, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	if fi, err := os.Stat(targetFile); err == nil && !fi.IsDir() {
+		return true
+	}
+	return false
+}
+
 func CreateFolderIfNotExist(path string) error {
 	if !HasFolder(path) {
 		return os.Mkdir(path, os.ModePerm)

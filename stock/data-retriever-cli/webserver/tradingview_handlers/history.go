@@ -1,7 +1,12 @@
 package tradingview_handlers
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	CLIUtils "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/utils"
@@ -23,6 +28,33 @@ func HistoryHandler(c echo.Context) error {
 		Status   string  `json:"s"`
 		ErrorMsg *string `json:"errmsg"`
 		NextTime *int64  `json:"nextTime"`
+	}
+
+	if strings.Contains(symbolStr, "_backtest") {
+		type BackTestRecord struct {
+			Timestamp int64  `json:"time"`
+			Type      string `json:"type"`
+			Price     string `json:"price"`
+			Unit      string `json:"unit"`
+		}
+		type Records struct {
+			Records []BackTestRecord `json:"records"`
+		}
+		tmp := strings.Split(symbolStr, "_")
+		backtestFile, _ := filepath.Abs(filepath.Join(filepath.Dir(os.Args[0]), "backtest", tmp[0], "buy_sell_records.json"))
+		if !CLIUtils.HasFile(backtestFile) {
+			str := "Backtest Records Not Found"
+			return c.JSON(200, errStruct{"error", &str, nil})
+		}
+		var records Records
+		jsonContent, err := ioutil.ReadFile(backtestFile)
+		if err != nil {
+			str := err.Error()
+			return c.JSON(200, errStruct{"error", &str, nil})
+		}
+		json.Unmarshal(jsonContent, &records)
+		// profitAndLost := 0
+		// position := 0
 	}
 
 	var dayResult []yahoo.PriceRecord

@@ -20,9 +20,29 @@
                 var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
                         results = regex.exec(location.search);
                 return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-            }
+			}
+			var getBacktestRecords = async function(symbol){
+				return new Promise(resolve => {
+					$.getJSON("/tradingview-backtest-api/records?symbol=" + symbol, function(data){
+						console.log(data);
+						resolve(data);
+					});
+				});
+			};
+			var loadBacktestAnnotation = async function(widget){
+				var records = (await getBacktestRecords(widget.chart().symbol())).records;
+				records.forEach(record => {
+					widget.chart().createShape({
+						time: record.time,
+						price: record.price
+					}, {
+						shape: (record.type === "Long")?"arrow_up":"arrow_down",
+						text: record.type + " | " + record.price
+					})
+				});
+			};
 			
-			TradingView.onready(async function(){
+			TradingView.onready(function(){
 				var widget = window.tvWidget = new TradingView.widget({
 					fullscreen: true,
 					symbol: 'HSI',
@@ -40,7 +60,12 @@
 					client_id: 'haudosi.com',
 					user_id: 'chanyk-joseph'
 				});
-				//widget.chart().createStudy('MACD', false, false, [14, 30, "close", 9])
+				widget.onChartReady(async function(){
+					widget.chart().onSymbolChanged().subscribe(null, async function(obj){
+						await loadBacktestAnnotation(widget);
+					});
+					await loadBacktestAnnotation(widget);
+				});
 			});
 		</script>
 

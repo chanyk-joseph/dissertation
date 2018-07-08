@@ -25,9 +25,15 @@ type SymbolResponse struct {
 }
 
 func SymbolHandler(c echo.Context) error {
-	stockSymbol, err := utils.ConvertToStandardSymbol(c.FormValue("symbol"))
-	if err != nil {
-		return c.JSON(500, common.ErrorWrapper{err.Error()})
+	var stockSymbol string
+	if c.FormValue("symbol") == "HSI:HSI" {
+		stockSymbol = "HSI"
+	} else {
+		var err error
+		stockSymbol, err = utils.ConvertToStandardSymbol(c.FormValue("symbol"))
+		if err != nil {
+			return c.JSON(500, common.ErrorWrapper{err.Error()})
+		}
 	}
 
 	resp := SymbolResponse{

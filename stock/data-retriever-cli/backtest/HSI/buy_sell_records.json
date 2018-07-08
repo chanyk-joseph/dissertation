@@ -1,0 +1,74 @@
+{
+    "records": [
+        {
+            "time": 1514851200,
+            "type": "Long",
+            "price": 30515,
+            "unit": 1,
+            "commission": 0
+        },
+        {
+            "time": 1517184000,
+            "type": "Short",
+            "price": 32966,
+            "unit": 1,
+            "commission": 0
+        },
+        {
+            "time": 1518134400,
+            "type": "Long",
+            "price": 29507,
+            "unit": 1,
+            "commission": 0
+        },
+        {
+            "time": 1519603200,
+            "type": "Short",
+            "price": 31498,
+            "unit": 1,
+            "commission": 0
+        },
+        {
+            "time": 1520208000,
+            "type": "Long",
+            "price": 29886,
+            "unit": 1,
+            "commission": 0
+        },
+        {
+            "time": 1521590400,
+            "type": "Short",
+            "price": 31414,
+            "unit": 1,
+            "commission": 0
+        },
+        {
+            "time": 1522800000,
+            "type": "Long",
+            "price": 29518,
+            "unit": 1,
+            "commission": 0
+        },
+        {
+            "time": 1523491200,
+            "type": "Short",
+            "price": 30831,
+            "unit": 1,
+            "commission": 0
+        },
+        {
+            "time": 1525651200,
+            "type": "Long",
+            "price": 29994,
+            "unit": 1,
+            "commission": 0
+        },
+        {
+            "time": 1526342400,
+            "type": "Short",
+            "price": 31152,
+            "unit": 1,
+            "commission": 0
+        }
+    ]
+}
