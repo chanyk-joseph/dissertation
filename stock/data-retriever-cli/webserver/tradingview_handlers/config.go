@@ -3,13 +3,20 @@ package tradingview_handlers
 import "github.com/labstack/echo"
 
 func ConfigHandler(c echo.Context) error {
-	resp := []byte(`{
+	/*
 		"supported_resolutions": [
 		   "1",
 		   "5",
 		   "15",
 		   "30",
 		   "60",
+		   "1D",
+		   "1W",
+		   "1M"
+		],
+	*/
+	resp := []byte(`{
+		"supported_resolutions": [
 		   "1D",
 		   "1W",
 		   "1M"
