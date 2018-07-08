@@ -34,7 +34,7 @@ func main() {
 		fmt.Println(baseURL + "/hsicomponents | Get a list of HSI components")
 		fmt.Println(baseURL + "/hsicomponents/quote | Get quotes for all HSI components stocks")
 		fmt.Println(baseURL + "/quote/<symbol> | Supported symbol format: 700, 00700, 700:HK, etc.>")
-		fmt.Println(baseURL + "/chart/index.html | Web Chart Using TradingView")
+		fmt.Println(baseURL + "/chart/index.html | Stock Chart Using TradingView")
 
 		webServer.Start(":" + strconv.Itoa(*serverPort))
 	case dbUpdateCommand.FullCommand():
