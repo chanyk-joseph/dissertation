@@ -46,25 +46,6 @@ func HistoryHandler(c echo.Context) error {
 	customTranslateFuncs := map[string]CLIUtils.TranslateFunction{"Date": timeToEpochSeconds}
 	result := CLIUtils.ArrToUDF(tmpResult, customFieldNames, customTranslateFuncs)
 
-	// type tmpObj struct {
-	// 	Status  string    `json:"s"`
-	// 	BarTime []int64   `json:"t"`
-	// 	Close   []float64 `json:"c"`
-	// 	Open    []float64 `json:"o"`
-	// 	High    []float64 `json:"h"`
-	// 	Low     []float64 `json:"l"`
-	// 	Volume  []int64   `json:"v"`
-	// }
-	// result := tmpObj{Status: "ok"}
-	// for _, o := range tmpResult {
-	// 	result.BarTime = append(result.BarTime, o.Date.Unix())
-	// 	result.Close = append(result.Close, o.AdjustedClose)
-	// 	result.Open = append(result.Open, o.Open)
-	// 	result.High = append(result.High, o.High)
-	// 	result.Low = append(result.Low, o.Low)
-	// 	result.Volume = append(result.Volume, o.Volume)
-	// }
-
 	return c.JSON(200, result)
 }
 
