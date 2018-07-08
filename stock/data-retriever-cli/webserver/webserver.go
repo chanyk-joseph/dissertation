@@ -72,6 +72,10 @@ func setupTradingviewAPI(e *echo.Echo) {
 	e.POST("/tradingview-storage-api/1.1/charts", tv.PostChartHandler)
 	e.DELETE("/tradingview-storage-api/1.1/charts", tv.DeleteChartHandler)
 
+	e.GET("/tradingview-storage-api/1.1/study_templates", tv.GetStudyTemplatesHandler)
+	e.POST("/tradingview-storage-api/1.1/study_templates", tv.PostStudyTemplatesHandler)
+	e.DELETE("/tradingview-storage-api/1.1/study_templates", tv.DeleteStudyTemplatesHandler)
+
 	// TBD
 	// e.GET("/tradingview-udf-api/marks", tv.TBD)
 	// e.GET("/tradingview-udf-api/timescale_marks", tv.TBD)

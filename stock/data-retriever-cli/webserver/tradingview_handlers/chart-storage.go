@@ -13,7 +13,7 @@ import (
 	"github.com/twinj/uuid"
 )
 
-type DataObj struct {
+type ChartDrawingDataObj struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
 	Timestamp  int64  `json:"timestamp"`
@@ -22,7 +22,7 @@ type DataObj struct {
 	Content    string `json:"content"`
 }
 
-func getStorageDirectory() string {
+func getChartDrawingStorageDirectory() string {
 	storageDir, _ := filepath.Abs(filepath.Join(filepath.Dir(os.Args[0]), "chart_storage"))
 	return storageDir
 }
@@ -32,18 +32,22 @@ func GetChartHandler(c echo.Context) error {
 	// userID := c.FormValue("user")
 	chartID := c.FormValue("chart")
 
-	targetFolder := getStorageDirectory()
-	CLIUtils.CreateFolderIfNotExist(targetFolder)
+	targetFolder := getChartDrawingStorageDirectory()
 	if chartID == "" {
 		listResp := struct {
-			Status string    `json:"status"`
-			Data   []DataObj `json:"data"`
+			Status string                `json:"status"`
+			Data   []ChartDrawingDataObj `json:"data"`
 		}{}
 		listResp.Status = "ok"
+		listResp.Data = []ChartDrawingDataObj{}
+		if !CLIUtils.HasFolder(targetFolder) {
+			return c.JSON(200, listResp)
+		}
+
 		jsonFiles, _ := filepath.Glob(filepath.Join(targetFolder, "*.json"))
 		for _, jsonFile := range jsonFiles {
 			jsonContent, _ := ioutil.ReadFile(jsonFile)
-			var data DataObj
+			var data ChartDrawingDataObj
 			json.Unmarshal(jsonContent, &data) //ignore error, To be improved
 			listResp.Data = append(listResp.Data, data)
 		}
@@ -51,10 +55,10 @@ func GetChartHandler(c echo.Context) error {
 	}
 
 	type ObjResp struct {
-		Status string  `json:"status"`
-		Data   DataObj `json:"data"`
+		Status string              `json:"status"`
+		Data   ChartDrawingDataObj `json:"data"`
 	}
-	var data DataObj
+	var data ChartDrawingDataObj
 	jsonContent, err := ioutil.ReadFile(filepath.Join(targetFolder, chartID+".json"))
 	if err != nil {
 		return c.JSON(500, ObjResp{Status: "error"})
@@ -76,10 +80,10 @@ func PostChartHandler(c echo.Context) error {
 		ID     string `json:"id"`
 	}
 
-	targetFolder := getStorageDirectory()
+	targetFolder := getChartDrawingStorageDirectory()
 	CLIUtils.CreateFolderIfNotExist(targetFolder)
 
-	data := DataObj{}
+	data := ChartDrawingDataObj{}
 
 	//Save Chart
 	if chartID == "" {
@@ -125,10 +129,9 @@ func DeleteChartHandler(c echo.Context) error {
 		Status string `json:"status"`
 	}
 
-	targetFolder := getStorageDirectory()
-	CLIUtils.CreateFolderIfNotExist(targetFolder)
-
 	if chartID != "" {
+		targetFolder := getChartDrawingStorageDirectory()
+		CLIUtils.CreateFolderIfNotExist(targetFolder)
 		jsonFilePath := filepath.Join(targetFolder, chartID+".json")
 		os.Remove(jsonFilePath)
 		return c.JSON(200, Response{"ok"})
