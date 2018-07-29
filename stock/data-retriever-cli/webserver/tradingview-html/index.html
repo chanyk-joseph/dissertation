@@ -58,13 +58,16 @@
 					charts_storage_url: '/tradingview-storage-api',
 					charts_storage_api_version: "1.1",
 					client_id: 'haudosi.com',
-					user_id: 'chanyk-joseph'
+					user_id: 'chanyk-joseph',
+					indicators_file_name: '/chart/indicators.js'
 				});
 				widget.onChartReady(async function(){
 					widget.chart().onSymbolChanged().subscribe(null, async function(obj){
 						await loadBacktestAnnotation(widget);
 					});
 					await loadBacktestAnnotation(widget);
+					// widget.chart().createStudy('MACD', false, false, [14, 30, "close", 9]);
+					// widget.chart().createStudy('joseph-indicator', false, true);
 				});
 			});
 		</script>

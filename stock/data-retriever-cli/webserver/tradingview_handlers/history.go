@@ -74,7 +74,8 @@ func HistoryHandler(c echo.Context) error {
 	timeToEpochSeconds := func(input interface{}) interface{} {
 		return input.(time.Time).Unix()
 	}
-	customFieldNames := map[string]string{"Date": "t", "Open": "o", "High": "h", "Low": "l", "AdjustedClose": "c", "Volume": "v"}
+	//AdjustedClose
+	customFieldNames := map[string]string{"Date": "t", "Open": "o", "High": "h", "Low": "l", "Close": "c", "Volume": "v"}
 	customTranslateFuncs := map[string]CLIUtils.TranslateFunction{"Date": timeToEpochSeconds}
 	result := CLIUtils.ArrToUDF(tmpResult, customFieldNames, customTranslateFuncs)
 
