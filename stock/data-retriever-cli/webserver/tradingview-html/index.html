@@ -45,7 +45,7 @@
 			TradingView.onready(function(){
 				var widget = window.tvWidget = new TradingView.widget({
 					fullscreen: true,
-					symbol: 'HSI',
+					symbol: 'HKGIDXHKD',
 					interval: 'D',
 					timezone: 'Asia/Hong_Kong',
 					container_id: "tv_chart_container",
@@ -68,6 +68,7 @@
 					await loadBacktestAnnotation(widget);
 					// widget.chart().createStudy('MACD', false, false, [14, 30, "close", 9]);
 					// widget.chart().createStudy('joseph-indicator', false, true);
+					widget.chart().createStudy('joseph-indicator', false, true);
 				});
 			});
 		</script>

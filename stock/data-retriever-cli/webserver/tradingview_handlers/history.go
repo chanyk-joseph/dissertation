@@ -1,21 +1,94 @@
 package tradingview_handlers
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"os"
-	"path/filepath"
+	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/database"
 	CLIUtils "github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/utils"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/yahoo"
 	"github.com/labstack/echo"
+	"github.com/vjeantet/jodaTime"
 )
 
 func HistoryHandler(c echo.Context) error {
+	symbolStr := c.FormValue("symbol")
+	fromTime, _ := strconv.Atoi(c.FormValue("from"))
+	toTime, _ := strconv.Atoi(c.FormValue("to"))
+	resolutionStr := c.FormValue("resolution")
+
+	startTimeUTC := time.Unix(int64(fromTime), 0).UTC()
+	endTimeUTC := time.Unix(int64(toTime), 0).UTC()
+
+	type errStruct struct {
+		Status   string  `json:"s"`
+		ErrorMsg *string `json:"errmsg"`
+		NextTime *int64  `json:"nextTime"`
+	}
+
+	if symbolStr == "joseph-indicator" {
+		symbolStr = "HKGIDXHKD"
+	}
+
+	// Check available resolutions
+	result, err := database.Query(fmt.Sprintf("select DISTINCT(resolution) from ohlc WHERE asset_name = '%s';", symbolStr))
+	if err != nil {
+		str := err.Error()
+		return c.JSON(200, errStruct{"error", &str, nil})
+	}
+	availableResolutions := make(map[string]bool)
+	for _, row := range result {
+		if tvRepresentation, ok := DBResolutionToTVResolutionMap[row["resolution"]]; ok {
+			availableResolutions[tvRepresentation] = true
+		}
+	}
+	if !availableResolutions[resolutionStr] {
+		str := fmt.Sprintf("Resolution %s Not Available For Asset %s", resolutionStr, symbolStr)
+		return c.JSON(200, errStruct{"error", &str, nil})
+	}
+
+	// Get History
+	timeFormat := "2006-01-02 15:04:05"
+	result, err = database.Query(fmt.Sprintf("select * from ohlc WHERE asset_name = '%s' AND `resolution` = '%s' AND `datetime` >= '%s' AND `datetime` <= '%s';", symbolStr, TVResolutionToDBResolutionMap[resolutionStr], startTimeUTC.Format(timeFormat), endTimeUTC.Format(timeFormat)))
+	if err != nil {
+		str := err.Error()
+		return c.JSON(200, errStruct{"error", &str, nil})
+	}
+
+	timeToEpochSeconds := func(input interface{}) interface{} {
+		datetimeStr := input.(string)
+		t, err := jodaTime.Parse("YYYY-MM-dd HH:mm:ss", datetimeStr)
+		if err != nil {
+			panic(err)
+		}
+		return t.Unix()
+	}
+	stringToFloat64 := func(input interface{}) interface{} {
+		valStr := input.(string)
+		result, err := strconv.ParseFloat(valStr, 64)
+		if err != nil {
+			panic(err)
+		}
+		return result
+	}
+
+	//AdjustedClose
+	customFieldNames := map[string]string{"datetime": "t", "open": "o", "high": "h", "low": "l", "close": "c", "volume": "v"}
+	customTranslateFuncs := map[string]CLIUtils.TranslateFunction{
+		"datetime": timeToEpochSeconds,
+		"open":     stringToFloat64,
+		"high":     stringToFloat64,
+		"low":      stringToFloat64,
+		"close":    stringToFloat64,
+		"volume":   stringToFloat64,
+	}
+	out := CLIUtils.ArrToUDF(result, customFieldNames, customTranslateFuncs)
+
+	return c.JSON(200, out)
+}
+
+/*
+func HistoryHandler_bk(c echo.Context) error {
 	symbolStr := c.FormValue("symbol")
 	fromTime, _ := strconv.Atoi(c.FormValue("from"))
 	toTime, _ := strconv.Atoi(c.FormValue("to"))
@@ -146,3 +219,4 @@ func resolutionStringToIntervalDuration(resolutionStr string) time.Duration {
 	}
 	return time.Duration(24) * time.Hour
 }
+*/

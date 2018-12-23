@@ -64,7 +64,7 @@ func SymbolHistoryHandler(c echo.Context) error {
 	}
 	targetFolder, _ := filepath.Abs(filepath.Join(dataProvider, symbolStr))
 	if CLIUtils.HasFolder(targetFolder) {
-		files, _ := filepath.Glob(filepath.Join(targetFolder, "*.csv"))
+		files, _ := CLIUtils.ListFilesWithExtention(targetFolder, ".csv")
 		if len(files) == 0 {
 			return c.JSON(404, common.ErrorWrapper{"CSV Files Not Found"})
 		}
@@ -91,7 +91,7 @@ func csvToObject(headers []string, lines [][]string) (result []map[string]interf
 }
 
 func guessTimeFormat(str string) (string, error) {
-	supporterTimeStr := []string{"YYYY-MM-ddTHH:mm:ss", "YYYY-MM-dd HH:mm:ss", "dd-MM-YYYY HH:mm:ss", "YYYY/MM/dd", "YYYY-MM-dd", "YYYY.MM.dd", "dd/MM/YYYY", "dd-MM-YYYY", "dd.MM.YYYY"}
+	supporterTimeStr := []string{"YYYY-MM-dd HH:mm:ss:SSSSSS", "YYYY-MM-ddTHH:mm:ss", "YYYY-MM-dd HH:mm:ss", "dd-MM-YYYY HH:mm:ss", "YYYY/MM/dd", "YYYY-MM-dd", "YYYY.MM.dd", "dd/MM/YYYY", "dd-MM-YYYY", "dd.MM.YYYY"}
 	targetTimeFormat := ""
 	for _, timeFormatStr := range supporterTimeStr {
 		if _, err := jodaTime.Parse(timeFormatStr, str); err == nil {
@@ -147,7 +147,7 @@ func loadAndMergeCSVs(files []string, startTime time.Time, endTime time.Time) (h
 }
 
 func getCSVFiles(folderPath string, startTime time.Time, endTime time.Time) (result []string, err error) {
-	files, _ := filepath.Glob(filepath.Join(folderPath, "*.csv"))
+	files, _ := CLIUtils.ListFilesWithExtention(folderPath, ".csv")
 	if len(files) == 0 {
 		return result, nil
 	}

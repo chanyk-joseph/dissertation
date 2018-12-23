@@ -19,49 +19,39 @@ __customIndicators = [
             "is_hidden_study": true,
             "is_price_study": true,
             "isCustomIndicator": true,
-    
+
             "plots": [{"id": "plot_0", "type": "line"}],
             "defaults": {
                 "styles": {
                     "plot_0": {
                         "linestyle": 0,
                         "visible": true,
-    
-                        // Plot line width.
-                        "linewidth": 2,
-    
-                        // Plot type:
-                        //    1 - Histogramm
-                        //    2 - Line
-                        //    3 - Cross
-                        //    4 - Area
-                        //    5 - Columns
-                        //    6 - Circles
-                        //    7 - Line With Breaks
-                        //    8 - Area With Breaks
-                        "plottype": 1,
 
-                        // Show price line?
-                        "trackPrice": false,
-    
-                        // Plot transparency, in percent.
+                        // Make the line thinner
+                        "linewidth": 1,
+
+                        // Plot type is Line
+                        "plottype": 2,
+
+                        // Show price line
+                        "trackPrice": true,
+
                         "transparency": 40,
-    
-                        // Plot color in #RRGGBB format
-                        "color": "#0000FF"
+
+                        // Set the plotted line color to dark red
+                        "color": "#880000"
                     }
                 },
-    
-                // Precision of the study's output values
-                // (quantity of digits after the decimal separator).
-                "precision": 2,
-    
+
+                // Precision is set to one digit, e.g. 777.7
+                "precision": 1,
+
                 "inputs": {}
             },
             "styles": {
                 "plot_0": {
                     // Output name will be displayed in the Style window
-                    "title": "-- output name --",
+                    "title": "Equity value",
                     "histogramBase": 0,
                 }
             },
@@ -80,7 +70,7 @@ __customIndicators = [
                 //    var symbol = "AAPL";
                 //    var symbol = "#EQUITY";
                 //    var symbol = PineJS.Std.ticker(this._context) + "#TEST";
-                var symbol = "00002.HK";
+                var symbol = "joseph-indicator"; //"00002.HK";
                 this._context.new_sym(symbol, PineJS.Std.period(this._context), PineJS.Std.period(this._context));
             };
     

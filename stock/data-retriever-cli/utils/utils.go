@@ -65,13 +65,22 @@ func ArrToUDF(inputArr interface{}, customFieldName map[string]string, customTra
 		tmpArr := []interface{}{}
 		translateFunc, hasTranslateFunc := customTranslateFunc[k]
 		for _, obj := range arr {
-			r := reflect.ValueOf(obj)
-			f := reflect.Indirect(r).FieldByName(k)
-			if hasTranslateFunc {
-				tmpArr = append(tmpArr, translateFunc(f.Interface()))
-				continue
+			if reflect.TypeOf(obj) == reflect.TypeOf(map[string]string{}) {
+				val := obj.(map[string]string)[k]
+				if hasTranslateFunc {
+					tmpArr = append(tmpArr, translateFunc(val))
+					continue
+				}
+				tmpArr = append(tmpArr, val)
+			} else {
+				r := reflect.ValueOf(obj)
+				f := reflect.Indirect(r).FieldByName(k)
+				if hasTranslateFunc {
+					tmpArr = append(tmpArr, translateFunc(f.Interface()))
+					continue
+				}
+				tmpArr = append(tmpArr, f.Interface())
 			}
-			tmpArr = append(tmpArr, f.Interface())
 		}
 		result[v] = tmpArr
 	}
@@ -105,6 +114,17 @@ func CreateFolderIfNotExist(path string) error {
 		return os.Mkdir(path, os.ModePerm)
 	}
 	return nil
+}
+
+func ListFilesWithExtention(dir string, ext string) ([]string, error) {
+	files := []string{}
+	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
+		if filepath.Ext(path) == ext {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return files, err
 }
 
 func GetQuoteFromAllProviders(symbol models.StandardSymbol) (models.RawQuoteFromAllProviders, models.StandardQuoteFromAllProviders, error) {

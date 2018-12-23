@@ -1,8 +1,9 @@
 package tradingview_handlers
 
 import (
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/common"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/common/utils"
+	"fmt"
+
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/database"
 	"github.com/labstack/echo"
 )
 
@@ -25,17 +26,18 @@ type SymbolResponse struct {
 }
 
 func SymbolHandler(c echo.Context) error {
-	var stockSymbol string
-	if c.FormValue("symbol") == "HSI:HSI" {
-		stockSymbol = "HSI"
-	} else {
-		var err error
-		stockSymbol, err = utils.ConvertToStandardSymbol(c.FormValue("symbol"))
-		if err != nil {
-			return c.JSON(500, common.ErrorWrapper{err.Error()})
+	stockSymbol := c.FormValue("symbol")
+
+	result, err := database.Query(fmt.Sprintf("select DISTINCT(resolution) from ohlc WHERE asset_name = '%s';", stockSymbol))
+	if err != nil {
+		return c.JSON(404, nil)
+	}
+	availableResolutions := []string{}
+	for _, row := range result {
+		if tvRepresentation, ok := DBResolutionToTVResolutionMap[row["resolution"]]; ok {
+			availableResolutions = append(availableResolutions, tvRepresentation)
 		}
 	}
-
 	resp := SymbolResponse{
 		Name:                stockSymbol,
 		ExchangeTraded:      "HSI",
@@ -49,7 +51,7 @@ func SymbolHandler(c echo.Context) error {
 		HasNoVolume:         false,
 		Description:         stockSymbol,
 		Type:                "stock",
-		SupportedResolution: []string{"D", "2D", "3D", "W", "3W", "M", "6M"},
+		SupportedResolution: availableResolutions,
 		PriceScale:          100,
 		Ticker:              stockSymbol,
 	}

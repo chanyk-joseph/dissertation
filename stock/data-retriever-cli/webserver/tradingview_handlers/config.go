@@ -1,6 +1,17 @@
 package tradingview_handlers
 
-import "github.com/labstack/echo"
+import (
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/database"
+	"github.com/labstack/echo"
+)
+
+type ConfigResponse struct {
+	SupportedResolutions   []string `json:"supported_resolutions"`
+	SupportsGroupRequest   bool     `json:"supports_group_request"`
+	SupportsMarks          bool     `json:"supports_marks"`
+	SupportsSearch         bool     `json:"supports_search"`
+	SupportsTimescaleMarks bool     `json:"supports_timescale_marks"`
+}
 
 func ConfigHandler(c echo.Context) error {
 	/*
@@ -15,16 +26,25 @@ func ConfigHandler(c echo.Context) error {
 		   "1M"
 		],
 	*/
-	resp := []byte(`{
-		"supported_resolutions": [
-		   "1D",
-		   "1W",
-		   "1M"
-		],
-		"supports_group_request": false,
-		"supports_marks": false,
-		"supports_search": true,
-		"supports_timescale_marks": false
-	 }`)
-	return c.JSONBlob(200, resp)
+
+	resp := ConfigResponse{}
+
+	result, err := database.Query("select DISTINCT(resolution) from ohlc;")
+	if err != nil {
+		return c.JSON(404, nil)
+	}
+	resolutions := []string{}
+	for _, row := range result {
+		if tvRepresentation, ok := DBResolutionToTVResolutionMap[row["resolution"]]; ok {
+			resolutions = append(resolutions, tvRepresentation)
+		}
+	}
+
+	resp.SupportedResolutions = resolutions
+	resp.SupportsGroupRequest = false
+	resp.SupportsMarks = false
+	resp.SupportsSearch = true
+	resp.SupportsTimescaleMarks = false
+
+	return c.JSON(200, resp)
 }

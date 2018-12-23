@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/database"
 	"github.com/chanyk-joseph/dissertation/stock/data-retriever-cli/webserver/common"
-	"github.com/chanyk-joseph/dissertation/stock/data-retriever/aastocks"
 	"github.com/labstack/echo"
 )
 
@@ -18,7 +18,7 @@ func SearchHandler(c echo.Context) error {
 		limit = 5
 	}
 
-	stockSymbols, err := aastocks.GetHSIConstituentsCodes()
+	result, err := database.Query("select DISTINCT(asset_name) from ohlc;")
 	if err != nil {
 		return c.JSON(500, common.ErrorWrapper{err.Error()})
 	}
@@ -33,17 +33,17 @@ func SearchHandler(c echo.Context) error {
 	}
 
 	resp := []tmpObj{}
-	for _, obj := range stockSymbols {
+	for _, obj := range result {
 		var o tmpObj
 		o = tmpObj{
-			Symbol:      obj.Symbol,
-			FullName:    obj.Symbol,
-			Description: obj.Symbol,
+			Symbol:      obj["asset_name"],
+			FullName:    obj["asset_name"],
+			Description: obj["asset_name"],
 			Exchange:    "HSI",
-			Ticker:      obj.Symbol,
+			Ticker:      obj["asset_name"],
 			Type:        "stock",
 		}
-		if strings.Contains(obj.Symbol, queryStr) && len(resp) < limit {
+		if strings.Contains(obj["asset_name"], queryStr) && len(resp) < limit {
 			resp = append(resp, o)
 		}
 	}
