@@ -1,4 +1,6 @@
 {
     "python.pythonPath": "C:\\Users\\Joseph\\Anaconda3\\python.exe",
-    "python.terminal.activateEnvironment": false
+    "python.terminal.activateEnvironment": false,
+    "python.linting.pylintEnabled": true,
+    "python.autoComplete.extraPaths": ["${workspaceFolder}"]
 }
