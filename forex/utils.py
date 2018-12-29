@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-def parseDateTimeStr(str):
+def parseDateTime(str):
     # 20080101 00:00:00:000
     return datetime.strptime(str, '%Y%m%d %H:%M:%S:%f')
 
