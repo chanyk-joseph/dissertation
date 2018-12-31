@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import talib
+from forex.utils import *
 
-from forex.utils import parseDateTime
 
 def plot(df):
     df.plot(x='datetime', y='total_asset_value')
@@ -17,14 +17,18 @@ def process_row(df, rowIndex):
     df.set_value(rowIndex, 'x', 1111)
     print(df)
 
-
 script_dir = path.dirname(path.realpath(sys.argv[0]))
-csvFile = path.join(script_dir, 'trade-record-simple.csv')
+data_dir = "F:\\modified_data"
 
-df = pd.read_csv(csvFile)
-process_row(df=df, rowIndex=1)
+tradeRecordCSV = path.join(script_dir, 'trade-record-simple.csv')
+ohlcCSV = path.join(data_dir, 'EURUSD_Daily_(1-1-2008_31-12-2017).csv')
 
-# plot(df)
+df = pd.read_csv(ohlcCSV)
+df = set_df_Timestamp_as_datetime(df)
+print(get_df_by_datetime_range(df, parseISODateTime('2008-01-02T00:00:00'), parseISODateTime('2017-01-03T00:00:00')))
+
+
+
 
 # import talib
 # close = np.random.random(100)
