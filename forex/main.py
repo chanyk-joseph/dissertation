@@ -51,16 +51,59 @@ ohlcCSV = path.join(data_dir, 'EURUSD_Daily_(1-1-2008_31-12-2017).csv')
 # plt.legend()
 # plt.show()
 
-ohlc_s_csv = path.join(data_dir, 'EURUSD_1MIN_(1-1-2008_31-12-2017).csv')
+ohlc_s_csv = path.join(data_dir, 'USDJPY_1MIN_(1-1-2008_31-12-2017).csv')
 df = set_df_Timestamp_as_datetime(pd.read_csv(ohlc_s_csv))
 df.index = pd.DatetimeIndex(df['Timestamp'])
-df = df.resample('60min').pad()
+df = df.resample('360min').pad()
 macd = MACD()
 df = macd.generate_buy_sell_records(df)
 
 df = df.loc[abs(df["MACD"])==1]
 print(df.head())
 print(len(df.index))
+
+
+
+records = df.loc[abs(df['MACD'])==1]
+records['CloseDiff'] = records['Close'].diff()
+records['MACDDiff'] = records['MACD'].diff()
+records.at[list(records.index)[0], "cash_balance"] = 100
+records.at[list(records.index)[0], "holding_units"] = 0
+records.at[list(records.index)[0], "total_asset_value"] = 100
+print(records.head())
+
+close_i = records.columns.get_loc('Close')
+close_diff_i = records.columns.get_loc('CloseDiff')
+macd_col_i = records.columns.get_loc('MACD')
+macd_diff_col_i = records.columns.get_loc('MACDDiff')
+cash_balance_i = records.columns.get_loc('cash_balance')
+holding_units_i = records.columns.get_loc('holding_units')
+total_asset_value_i = records.columns.get_loc('total_asset_value')
+for i, row in enumerate(records.itertuples()):
+    if i == 0:
+        continue
+
+    curCloseDiff = records.iat[i, close_diff_i]
+    curMACD = records.iat[i, macd_col_i]
+    curMACDDiff = records.iat[i, macd_diff_col_i]
+
+    if curMACDDiff == -2:
+        records.iat[i, total_asset_value_i] = records.iat[i-1, total_asset_value_i] + curCloseDiff * 100
+    else:
+        records.iat[i, total_asset_value_i] = records.iat[i-1, total_asset_value_i]
+
+print(records.tail())
+plt.plot(records["Close"] * 100, label='Close')
+plt.plot(records["total_asset_value"], label='total_asset_value')
+plt.axhline(y=0, color='r', linestyle='-')
+plt.ylabel('some numbers')
+plt.legend()
+plt.show()
+
+sys.exit()
+
+
+
 
 
 df.at[list(df.index)[0], "cash_balance"] = 100
@@ -97,7 +140,8 @@ for i, row in enumerate(df.itertuples()):
     df.iat[i, total_asset_value_i] = curTotal
     
 print(df.tail())
-plt.plot(df["total_asset_value"], label='signal')
+plt.plot(df["Close"] * 100, label='Close')
+plt.plot(df["total_asset_value"], label='total_asset_value')
 plt.axhline(y=0, color='r', linestyle='-')
 plt.ylabel('some numbers')
 plt.legend()
