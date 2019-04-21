@@ -9,26 +9,83 @@ from forex.utils import *
 from strategies.sma import SMA
 from strategies.macd import MACD
 
+from sklearn.preprocessing import MinMaxScaler
+from data import OHLC
+
 import talib
 
-def plot(df):
-    df.plot(x='datetime', y='total_asset_value')
-    plt.show()
+script_dir = path.dirname(path.realpath(sys.argv[0]))
+data_dir = "F:\\modified_data"
 
 def process_row(df, rowIndex):
     df.set_value(rowIndex, 'x', 1111)
     print(df)
 
-script_dir = path.dirname(path.realpath(sys.argv[0]))
-data_dir = "F:\\modified_data"
+def plot_earn_graph(df, buyColName):
+    positions = []
+    balance = 0
+    df.at[list(df.index)[0], "balance"] = 0
+    close_i = df.columns.get_loc('Close') 
+    buyNext = False
+    for i, row in enumerate(df.itertuples()):
+        curTimestamp = row.Timestamp.to_pydatetime()
+        curClose = row.Close
+        isIncreasing = getattr(row, buyColName)
 
+        if buyNext:
+            positions.append({
+                'Close': curClose,
+                'Timestamp': row.Timestamp.to_pydatetime()
+            })
+            buyNext = False
+        if isIncreasing == 1:
+            buyNext = True
+        if len(positions) > 0:
+            shouldCutPositions = [pos for pos in positions if curClose - pos['Close'] <= -0.0050 or curClose - pos['Close'] >= 0.02 or (curTimestamp - pos['Timestamp']).total_seconds() >= 1800]
+            for pendingCutPos in shouldCutPositions:
+                netProfit = curClose - pendingCutPos['Close']
+                # print(str(i) + ": " + str(netProfit) + " | balance: "+ str(balance))
+                balance += netProfit * 10000
+                positions.remove(pendingCutPos)
+        df.loc[row.Index, 'balance'] = balance
+    plot_fields(df, ['balance'])
+
+currencyPairs = ['AUDUSD', 'EURGBP', 'EURUSD', 'GBPJPY', 'GBPUSD', 'NZDUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'XAUUSD']
+for currencyPair in currencyPairs:
+    p = OHLC(path.join('F:\\modified_data', currencyPair+'_1MIN_(1-1-2008_31-12-2017).csv'))
+    p.set_df(p.get_df_with_resolution('1min'))
+    p.merge_df(p.get_mins_returns_cols([1,2,4,8,16,32], 'mins'))
+    p.merge_df(p.get_normalized_price([60, 120, 240, 1440, 10080, 43200], 'mins'))
+    p.save(path.join('F:\\modified_data', currencyPair+'_1MIN_(1-1-2008_31-12-2017)_with_returns.csv'))
+
+sys.exit()
+
+p.df['Close'] = p.df['Close']
+print(p.df.tail(400).loc[:, ['Close', 'Close_Normalized_By_Future_ema360', 'Close_Normalized_By_Future_360']])
+# p.print()
+plot_fields(get_df_by_datetime_range(p.df, parseISODateTime('2008-01-02T00:00:00'), parseISODateTime('2008-01-03T00:00:00')), 'Close', ['Close_Normalized_By_Past_1800', 'Close_Normalized_By_Future_1800'])
+
+# print(p.get_df_with_resolution('2D'))
+# print(pd.infer_freq(p.df.index))
+sys.exit()
+
+cl = df['Close'].as_matrix().reshape(-1, 1)
+scaler = MinMaxScaler()
+scaler.fit(cl)
+cl = scaler.transform(cl)
+print(cl)
+df['norm_Close'] = cl
+print(df)
+df['Close'] = df['Close'] / 100
+plot_fields(df, ['Close', 'norm_Close'])
+
+'''
 tradeRecordCSV = path.join(script_dir, 'trade-record-simple.csv')
-
 ohlcCSV = path.join(data_dir, 'EURUSD_Daily_(1-1-2008_31-12-2017).csv')
 # df = set_df_Timestamp_as_datetime(pd.read_csv(ohlcCSV))
 # print(get_df_by_datetime_range(df, parseISODateTime('2008-01-02T00:00:00'), parseISODateTime('2017-01-03T00:00:00')))
 # close = np.random.random(100)
-# smaStrategy = SMA(60*60*24*3)
+# smaStrategy = SMA(60*60*24*3) 
 # result = smaStrategy.calculate(df, parseISODateTime('2001-01-07T00:00:00'))
 # print(result)
 # plt.plot(result)
@@ -54,14 +111,53 @@ ohlcCSV = path.join(data_dir, 'EURUSD_Daily_(1-1-2008_31-12-2017).csv')
 ohlc_s_csv = path.join(data_dir, 'USDJPY_1MIN_(1-1-2008_31-12-2017).csv')
 df = set_df_Timestamp_as_datetime(pd.read_csv(ohlc_s_csv))
 df.index = pd.DatetimeIndex(df['Timestamp'])
-df = df.resample('360min').pad()
+df = df.resample('5min').pad() # pad: fill NaN with previous value 
+
+
+
+
+# Calculate log return, and forward looking to generate
+df['LogReturn'] = np.log(df.Close/df.Close.shift(1))
+df['Forward5LogReturn'] = df['LogReturn'][::-1].rolling(5).sum()[::-1] - df['LogReturn']
+df['Forward10LogReturn'] = df['LogReturn'][::-1].rolling(10).sum()[::-1] - df['LogReturn']
+# df['Forward15LogReturn'] = df['LogReturn'][::-1].rolling(15).sum()[::-1] - df['LogReturn']
+# df['Forward30LogReturn'] = df['LogReturn'][::-1].rolling(30).sum()[::-1] - df['LogReturn']
+# df['Forward60LogReturn'] = df['LogReturn'][::-1].rolling(60).sum()[::-1] - df['LogReturn']
+# df['Forward360LogReturn'] = df['LogReturn'][::-1].rolling(360).sum()[::-1] - df['LogReturn']
+
+print(df.head(10))
+print(df.tail(10))
+
+records = df
+# plt.plot(records["Close"] / 100000, label='Close')
+plt.plot(records["Forward5LogReturn"], label='Forward5LogReturn')
+plt.plot(records["Forward10LogReturn"], label='Forward10LogReturn')
+# plt.plot(records["Forward5LogReturn"], label='Forward5LogReturn')
+# plt.plot(records["Forward15LogReturn"], label='Forward15LogReturn')
+# plt.plot(records["Forward30LogReturn"], label='Forward30LogReturn')
+# plt.plot(records["Forward60LogReturn"], label='Forward60LogReturn')
+# plt.plot(records["Forward360LogReturn"], label='Forward360LogReturn')
+plt.axhline(y=0, color='r', linestyle='-')
+plt.ylabel('some numbers')
+plt.legend()
+plt.show()
+
+sys.exit()
+
+
+
+
+
 macd = MACD()
 df = macd.generate_buy_sell_records(df)
 
+
+
+
+print(df.head())
 df = df.loc[abs(df["MACD"])==1]
 print(df.head())
 print(len(df.index))
-
 
 
 records = df.loc[abs(df['MACD'])==1]
@@ -146,3 +242,4 @@ plt.axhline(y=0, color='r', linestyle='-')
 plt.ylabel('some numbers')
 plt.legend()
 plt.show()
+'''

@@ -39,9 +39,8 @@ class MACD(Strategy):
         #     else:
         #         return abs(slope / hist_slope_min)
         # signal_strength = hist_slope.apply(calculate_strength)
-
-
-        return signal, signal_strength
+        
+        return signal.shift(1), signal_strength.shift(1)
 
     def generate_buy_sell_records(self, df):
         signal, signal_strength = self.generate_signal(df)
