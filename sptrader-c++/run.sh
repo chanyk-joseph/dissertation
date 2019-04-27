@@ -1,1 +1,0 @@
-LD_LIBRARY_PATH="$(pwd)/lib" nohup ./main > console.log 2>&1 &
