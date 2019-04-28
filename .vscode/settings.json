@@ -1,0 +1,6 @@
+{
+    "python.pythonPath": "/home/joseph/anaconda3/envs/dissertation/bin/python",
+    "python.analysis.disabled": [
+        "unresolved-import"
+    ]
+}

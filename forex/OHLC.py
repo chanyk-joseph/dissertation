@@ -130,11 +130,11 @@ class OHLC:
                 df['PIP_Return_forward_looking_for_'+str(period)+unit+'_sum'] = df['PIP_Return_1'+unit][::-1].shift(1).rolling(period).sum()[::-1]
 
             for i, period in enumerate(rollingPeriods):
-                print("period: "+str(period))
+                # print("period: "+str(period))
                 colToBeUsed = []
                 for j in range(i+1):
                     colToBeUsed.append('PIP_Return_forward_looking_for_'+str(rollingPeriods[j])+unit+'_sum')
-                print("colToBeUsed: " + ",".join(colToBeUsed))
+                # print("colToBeUsed: " + ",".join(colToBeUsed))
                 df['PIP_Return_forward_looking_for_'+str(period)+unit+'_min'] = df.loc[:, colToBeUsed].min(axis=1)
                 df['PIP_Return_forward_looking_for_'+str(period)+unit+'_max'] = df.loc[:, colToBeUsed].max(axis=1)
 
@@ -147,9 +147,10 @@ class OHLC:
                 df['Normalized_PIP_Return_forward_looking_for_'+str(period)+unit+'_max'] = vals
             return df
 
-        df = calculate_log_returns(self.df.loc[:, ['Close']].copy(), rollingPeriods)
+        df = self.df.loc[:, ['Close']].copy()
+        # df = calculate_log_returns(df, rollingPeriods)
         df = calculate_pips_return(df, rollingPeriods)
-        print(len(df.index))
+        # print(len(df.index))
         for i, period in enumerate(rollingPeriods):
             if period == 1:
                 df['is_all_forward_looking_increasing_within_1'+unit] = np.where(df['PIP_Return_forward_looking_for_1'+unit+'_sum'] > 0, 1, 0)

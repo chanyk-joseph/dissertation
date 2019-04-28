@@ -1,95 +1,3 @@
-
-# import random, os, sys
-# from tensorflow.keras.models import *
-# from tensorflow.keras.layers import *
-# from tensorflow.keras.callbacks import *
-# from tensorflow.keras.initializers import *
-# import tensorflow.keras.backend as K
-# import tensorflow as tf
-# from tensorflow.python.keras.layers import Layer
-# from tensorflow.python.keras.layers import CuDNNLSTM
-# LSTM = CuDNNLSTM
-
-
-import tensorflow
-print(tensorflow.__version__)
-
-import tensorflow.keras as keras
-import tensorflow.keras.layers as L
-import tensorflow.keras.models as M
-
-print(keras.__version__)
-
-import tensorflow.python.keras.layers.CuDNNLSTM as LSTM
-import numpy
-
-# The inputs to the model.
-# We will create two data points, just for the example.
-data_x = numpy.array([
-    # Datapoint 1
-    [
-        # Input features at timestep 1
-        [1, 2, 3],
-        # Input features at timestep 2
-        [4, 5, 6]
-    ],
-    # Datapoint 2
-    [
-        # Features at timestep 1
-        [7, 8, 9],
-        # Features at timestep 2
-        [10, 11, 12]
-    ]
-])
-
-# The desired model outputs.
-# We will create two data points, just for the example.
-data_y = numpy.array([
-    # Datapoint 1
-    [
-        # Target features at timestep 1
-        [101, 102, 103, 104],
-        # Target features at timestep 2
-        [105, 106, 107, 108]
-    ],
-    # Datapoint 2
-    [
-        # Target features at timestep 1
-        [201, 202, 203, 204],
-        # Target features at timestep 2
-        [205, 206, 207, 208]
-    ]
-])
-
-# Each input data point has 2 timesteps, each with 3 features.
-# So the input shape (excluding batch_size) is (2, 3), which
-# matches the shape of each data point in data_x above.
-model_input = L.Input(shape=(2, 3))
-
-# This RNN will return timesteps with 4 features each.
-# Because return_sequences=True, it will output 2 timesteps, each
-# with 4 features. So the output shape (excluding batch size) is
-# (2, 4), which matches the shape of each data point in data_y above.
-model_output = LSTM(4, return_sequences=True)(model_input)
-
-print('----')
-print(model_input)
-print('----')
-model_output
-print('----')
-
-# Create the model.
-model = M.Model(input=model_input, output=model_output)
-
-# You need to pick appropriate loss/optimizers for your problem.
-# I'm just using these to make the example compile.
-model.compile('sgd', 'mean_squared_error')
-
-# Train
-model.fit(data_x, data_y)
-
-sys.exit()
-
 import os.path as path
 import sys
 
@@ -97,45 +5,41 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import *
+from forex.utils import *
 from sklearn.preprocessing import MinMaxScaler
-from OHLC import OHLC
+from forex.OHLC import OHLC
 
 script_dir = path.dirname(path.realpath(sys.argv[0]))
-data_dir = "/hdd/dissertation"
+data_dir = "/home/joseph/Desktop/datastore"
 
-def process_row(df, rowIndex):
-    df.set_value(rowIndex, 'x', 1111)
-    print(df)
+# def plot_earn_graph(df, buyColName):
+#     positions = []
+#     balance = 0
+#     df.at[list(df.index)[0], "balance"] = 0
+#     close_i = df.columns.get_loc('Close') 
+#     buyNext = False
+#     for i, row in enumerate(df.itertuples()):
+#         curTimestamp = row.Timestamp.to_pydatetime()
+#         curClose = row.Close
+#         isIncreasing = getattr(row, buyColName)
 
-def plot_earn_graph(df, buyColName):
-    positions = []
-    balance = 0
-    df.at[list(df.index)[0], "balance"] = 0
-    close_i = df.columns.get_loc('Close') 
-    buyNext = False
-    for i, row in enumerate(df.itertuples()):
-        curTimestamp = row.Timestamp.to_pydatetime()
-        curClose = row.Close
-        isIncreasing = getattr(row, buyColName)
-
-        if buyNext:
-            positions.append({
-                'Close': curClose,
-                'Timestamp': row.Timestamp.to_pydatetime()
-            })
-            buyNext = False
-        if isIncreasing == 1:
-            buyNext = True
-        if len(positions) > 0:
-            shouldCutPositions = [pos for pos in positions if curClose - pos['Close'] <= -0.0050 or curClose - pos['Close'] >= 0.02 or (curTimestamp - pos['Timestamp']).total_seconds() >= 1800]
-            for pendingCutPos in shouldCutPositions:
-                netProfit = curClose - pendingCutPos['Close']
-                # print(str(i) + ": " + str(netProfit) + " | balance: "+ str(balance))
-                balance += netProfit * 10000
-                positions.remove(pendingCutPos)
-        df.loc[row.Index, 'balance'] = balance
-    plot_fields(df, ['balance'])
+#         if buyNext:
+#             positions.append({
+#                 'Close': curClose,
+#                 'Timestamp': row.Timestamp.to_pydatetime()
+#             })
+#             buyNext = False
+#         if isIncreasing == 1:
+#             buyNext = True
+#         if len(positions) > 0:
+#             shouldCutPositions = [pos for pos in positions if curClose - pos['Close'] <= -0.0050 or curClose - pos['Close'] >= 0.02 or (curTimestamp - pos['Timestamp']).total_seconds() >= 1800]
+#             for pendingCutPos in shouldCutPositions:
+#                 netProfit = curClose - pendingCutPos['Close']
+#                 # print(str(i) + ": " + str(netProfit) + " | balance: "+ str(balance))
+#                 balance += netProfit * 10000
+#                 positions.remove(pendingCutPos)
+#         df.loc[row.Index, 'balance'] = balance
+#     plot_fields(df, ['balance'])
 
 currencyPairs = ['AUDUSD', 'EURGBP', 'EURUSD', 'GBPJPY', 'GBPUSD', 'NZDUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'XAUUSD']
 
@@ -151,15 +55,17 @@ from tensorflow.python.keras.layers import Layer
 from tensorflow.python.keras.layers import CuDNNLSTM
 LSTM = CuDNNLSTM
 
-try:
-    from dataloader import TokenList, pad_to_longest
-    # for transformer
-except: pass
+# try:
+#     from dataloader import TokenList, pad_to_longest
+#     # for transformer
+# except: pass
 
-
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+config = tf.compat.v1.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.compat.v1.InteractiveSession(config=config)
 
 embed_size = 60
-
 SEQ_LEN = 200  # how long of a preceeding sequence to collect for RNN
 
 class LayerNormalization(Layer):
@@ -168,7 +74,7 @@ class LayerNormalization(Layer):
         super(LayerNormalization, self).__init__(**kwargs)
     def build(self, input_shape):
         self.gamma = self.add_weight(name='gamma', shape=input_shape[-1:],
-                                     initializer=Ones(), trainable=True)
+                                    initializer=Ones(), trainable=True)
         self.beta = self.add_weight(name='beta', shape=input_shape[-1:],
                                     initializer=Zeros(), trainable=True)
         super(LayerNormalization, self).build(input_shape)
@@ -264,95 +170,95 @@ class MultiHeadAttention():
         # outputs = Add()([outputs, q]) # sl: fix
         return self.layer_norm(outputs), attn
 
-class PositionwiseFeedForward():
-    def __init__(self, d_hid, d_inner_hid, dropout=0.1):
-        self.w_1 = Conv1D(d_inner_hid, 1, activation='relu')
-        self.w_2 = Conv1D(d_hid, 1)
-        self.layer_norm = LayerNormalization()
-        self.dropout = Dropout(dropout)
-    def __call__(self, x):
-        output = self.w_1(x) 
-        output = self.w_2(output)
-        output = self.dropout(output)
-        output = Add()([output, x])
-        return self.layer_norm(output)
+# class PositionwiseFeedForward():
+#     def __init__(self, d_hid, d_inner_hid, dropout=0.1):
+#         self.w_1 = Conv1D(d_inner_hid, 1, activation='relu')
+#         self.w_2 = Conv1D(d_hid, 1)
+#         self.layer_norm = LayerNormalization()
+#         self.dropout = Dropout(dropout)
+#     def __call__(self, x):
+#         output = self.w_1(x) 
+#         output = self.w_2(output)
+#         output = self.dropout(output)
+#         output = Add()([output, x])
+#         return self.layer_norm(output)
 
-class EncoderLayer():
-    def __init__(self, d_model, d_inner_hid, n_head, d_k, d_v, dropout=0.1):
-        self.self_att_layer = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
-        self.pos_ffn_layer  = PositionwiseFeedForward(d_model, d_inner_hid, dropout=dropout)
-    def __call__(self, enc_input, mask=None):
-        output, slf_attn = self.self_att_layer(enc_input, enc_input, enc_input, mask=mask)
-        output = self.pos_ffn_layer(output)
-        return output, slf_attn
+# class EncoderLayer():
+#     def __init__(self, d_model, d_inner_hid, n_head, d_k, d_v, dropout=0.1):
+#         self.self_att_layer = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
+#         self.pos_ffn_layer  = PositionwiseFeedForward(d_model, d_inner_hid, dropout=dropout)
+#     def __call__(self, enc_input, mask=None):
+#         output, slf_attn = self.self_att_layer(enc_input, enc_input, enc_input, mask=mask)
+#         output = self.pos_ffn_layer(output)
+#         return output, slf_attn
 
 
-def GetPosEncodingMatrix(max_len, d_emb):
-    pos_enc = np.array([
-        [pos / np.power(10000, 2 * (j // 2) / d_emb) for j in range(d_emb)] 
-        if pos != 0 else np.zeros(d_emb) 
-            for pos in range(max_len)
-            ])
-    pos_enc[1:, 0::2] = np.sin(pos_enc[1:, 0::2]) # dim 2i
-    pos_enc[1:, 1::2] = np.cos(pos_enc[1:, 1::2]) # dim 2i+1
-    return pos_enc
+# def GetPosEncodingMatrix(max_len, d_emb):
+#     pos_enc = np.array([
+#         [pos / np.power(10000, 2 * (j // 2) / d_emb) for j in range(d_emb)] 
+#         if pos != 0 else np.zeros(d_emb) 
+#             for pos in range(max_len)
+#             ])
+#     pos_enc[1:, 0::2] = np.sin(pos_enc[1:, 0::2]) # dim 2i
+#     pos_enc[1:, 1::2] = np.cos(pos_enc[1:, 1::2]) # dim 2i+1
+#     return pos_enc
 
-def GetPadMask(q, k):
-    ones = K.expand_dims(K.ones_like(q, 'float32'), -1)
-    mask = K.cast(K.expand_dims(K.not_equal(k, 0), 1), 'float32')
-    mask = K.batch_dot(ones, mask, axes=[2,1])
-    return mask
+# def GetPadMask(q, k):
+#     ones = K.expand_dims(K.ones_like(q, 'float32'), -1)
+#     mask = K.cast(K.expand_dims(K.not_equal(k, 0), 1), 'float32')
+#     mask = K.batch_dot(ones, mask, axes=[2,1])
+#     return mask
 
-def GetSubMask(s):
-    len_s = tf.shape(s)[1]
-    bs = tf.shape(s)[:1]
-    mask = K.cumsum(tf.eye(len_s, batch_shape=bs), 1)
-    return mask
+# def GetSubMask(s):
+#     len_s = tf.shape(s)[1]
+#     bs = tf.shape(s)[:1]
+#     mask = K.cumsum(tf.eye(len_s, batch_shape=bs), 1)
+#     return mask
 
-class Transformer():
-    def __init__(self, len_limit, embedding_matrix, d_model=embed_size, \
-              d_inner_hid=512, n_head=10, d_k=64, d_v=64, layers=2, dropout=0.1, \
-              share_word_emb=False, **kwargs):
-        self.name = 'Transformer'
-        self.len_limit = len_limit
-        self.src_loc_info = False # True # sl: fix later
-        self.d_model = d_model
-        self.decode_model = None
-        d_emb = d_model
+# class Transformer():
+#     def __init__(self, len_limit, embedding_matrix, d_model=embed_size, \
+#             d_inner_hid=512, n_head=10, d_k=64, d_v=64, layers=2, dropout=0.1, \
+#             share_word_emb=False, **kwargs):
+#         self.name = 'Transformer'
+#         self.len_limit = len_limit
+#         self.src_loc_info = False # True # sl: fix later
+#         self.d_model = d_model
+#         self.decode_model = None
+#         d_emb = d_model
 
-        pos_emb = Embedding(len_limit, d_emb, trainable=False, \
-                            weights=[GetPosEncodingMatrix(len_limit, d_emb)])
+#         pos_emb = Embedding(len_limit, d_emb, trainable=False, \
+#                             weights=[GetPosEncodingMatrix(len_limit, d_emb)])
 
-        i_word_emb = Embedding(max_features, d_emb, weights=[embedding_matrix]) # Add Kaggle provided embedding here
+#         i_word_emb = Embedding(max_features, d_emb, weights=[embedding_matrix]) # Add Kaggle provided embedding here
 
-        self.encoder = Encoder(d_model, d_inner_hid, n_head, d_k, d_v, layers, dropout, \
-                               word_emb=i_word_emb, pos_emb=pos_emb)
+#         self.encoder = Encoder(d_model, d_inner_hid, n_head, d_k, d_v, layers, dropout, \
+#                             word_emb=i_word_emb, pos_emb=pos_emb)
 
         
-    def get_pos_seq(self, x):
-        mask = K.cast(K.not_equal(x, 0), 'int32')
-        pos = K.cumsum(K.ones_like(x, 'int32'), 1)
-        return pos * mask
+#     def get_pos_seq(self, x):
+#         mask = K.cast(K.not_equal(x, 0), 'int32')
+#         pos = K.cumsum(K.ones_like(x, 'int32'), 1)
+#         return pos * mask
 
-    def compile(self, active_layers=999):
-        src_seq_input = Input(shape=(None, ))
-        x = Embedding(max_features, embed_size, weights=[embedding_matrix])(src_seq_input)
+#     def compile(self, active_layers=999):
+#         src_seq_input = Input(shape=(None, ))
+#         x = Embedding(max_features, embed_size, weights=[embedding_matrix])(src_seq_input)
         
-        # LSTM before attention layers
-        x = Bidirectional(LSTM(128, return_sequences=True))(x)
-        x = Bidirectional(LSTM(64, return_sequences=True))(x) 
+#         # LSTM before attention layers
+#         x = Bidirectional(LSTM(128, return_sequences=True))(x)
+#         x = Bidirectional(LSTM(64, return_sequences=True))(x) 
         
-        x, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1)(x, x, x)
+#         x, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1)(x, x, x)
         
-        avg_pool = GlobalAveragePooling1D()(x)
-        max_pool = GlobalMaxPooling1D()(x)
-        conc = concatenate([avg_pool, max_pool])
-        conc = Dense(64, activation="relu")(conc)
-        x = Dense(1, activation="sigmoid")(conc)   
+#         avg_pool = GlobalAveragePooling1D()(x)
+#         max_pool = GlobalMaxPooling1D()(x)
+#         conc = concatenate([avg_pool, max_pool])
+#         conc = Dense(64, activation="relu")(conc)
+#         x = Dense(1, activation="sigmoid")(conc)   
         
         
-        self.model = Model(inputs=src_seq_input, outputs=x)
-        self.model.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics=['accuracy'])
+#         self.model = Model(inputs=src_seq_input, outputs=x)
+#         self.model.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics=['accuracy'])
 
 def build_model():
     inp = Input(shape = (SEQ_LEN, 1))
@@ -387,16 +293,16 @@ RATIO_TO_PREDICT = 'Normalized_PIP_Return_forward_looking_for_8mins_max'
 FUTURE_PERIOD_PREDICT = 1
 
 print('Reading CSV')
-p = OHLC(path.join('/hdd/dissertation', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns.csv'))
+p = OHLC(path.join('/home/joseph/Desktop/datastore', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns.csv'))
 print('Readed')
-p.set_df(p.get_df_with_resolution('8min'))
+p.set_df(p.get_df_with_resolution('15min'))
 p.df.reset_index(drop=True)
 df = p.df.loc[:, [RATIO_TO_PREDICT]]
-# p.save(path.join('/hdd/dissertation', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns_2.csv'))
-# df = pd.read_csv(path.join('/hdd/dissertation', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns_2.csv'),delimiter=',',usecols=[RATIO_TO_PREDICT])
+# p.save(path.join('/home/joseph/Desktop/datastore', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns_2.csv'))
+# df = pd.read_csv(path.join('/home/joseph/Desktop/datastore', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns_2.csv'),delimiter=',',usecols=[RATIO_TO_PREDICT])
 df = df.dropna()
 
-# df = pd.read_csv(path.join('/hdd/dissertation', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns.csv'),delimiter=',',usecols=[RATIO_TO_PREDICT])
+# df = pd.read_csv(path.join('/home/joseph/Desktop/datastore', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns.csv'),delimiter=',',usecols=[RATIO_TO_PREDICT])
 # df = df.dropna()
 
 times = sorted(df.index.values)  # get the times
@@ -404,7 +310,7 @@ last_10pct = sorted(df.index.values)[-int(0.1*len(times))]  # get the last 10% o
 last_20pct = sorted(df.index.values)[-int(0.2*len(times))]  # get the last 20% of the times
 
 test_df = df[(df.index >= last_10pct)]
-validation_df = df[(df.index >= last_20pct) & (df.index < last_10pct)]  
+validation_df = df[(df.index >= last_20pct) & (df.index < last_10pct)]
 train_df = df[(df.index < last_20pct)]  # now the train_df is all the data up to the last 20%
 
 train_data = train_df[RATIO_TO_PREDICT].as_matrix()
@@ -450,17 +356,19 @@ BATCH_SIZE = 1024  # how many batches? Try smaller batch if you're getting OOM (
 import time
 NAME = f"{SEQ_LEN}-SEQ-{FUTURE_PERIOD_PREDICT}-PRED-{int(time.time())}"  # a unique name for the model
 
+
 multi_head.fit(X_train, y_train,
                     batch_size=BATCH_SIZE,
                     epochs=EPOCHS,
                     validation_data=(X_valid, y_valid), 
                     #callbacks = [checkpoint , lr_reduce]
-             )
+            )
 
 predicted_stock_price_multi_head = multi_head.predict(X_test)
 print(predicted_stock_price_multi_head.shape)
 predicted_stock_price_multi_head = np.vstack((np.full((60,1), np.nan), predicted_stock_price_multi_head))
 
+session.close()
 
 plt.figure(figsize = (18,9))
 # plt.plot(test_data, color = 'black', label = 'GE Stock Price')
