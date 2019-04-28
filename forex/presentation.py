@@ -1,10 +1,3 @@
-#%% Change working directory from the workspace root to the ipynb file location. Turn this addition off with the DataScience.changeDirOnImportExport setting
-import os
-try:
-	os.chdir(os.path.join(os.getcwd(), 'forex'))
-	print(os.getcwd())
-except:
-	pass
 
 #%% Initialize path
 import platform
@@ -24,8 +17,23 @@ from forex.OHLC import OHLC
 currencyPair = 'USDJPY'
 # p = OHLC(path.join(dataDir, currencyPair+'_1MIN_(1-1-2008_31-12-2017)_with_returns_simple.csv'))
 p = OHLC(path.join(dataDir, currencyPair+'_1MIN_(1-1-2008_31-12-2017).csv'))
+print(p.df.head())
+
+#%% Convert to 1min interval and fill missing records with previous values
 p.set_df(p.get_df_with_resolution('1min'))
+
+#%% Calculate pip returns within future X mins
 p.merge_df(p.get_mins_returns_cols([1,2,4,8,16,32], 'mins'))
+
+#%% print
+pd.DataFrame({
+    '1mins': p.df['PIP_Return_forward_looking_for_1mins_max'],
+    '2mins': p.df['PIP_Return_forward_looking_for_2mins_max'],
+    '4mins': p.df['PIP_Return_forward_looking_for_4mins_max'],
+    '8mins': p.df['PIP_Return_forward_looking_for_8mins_max'],
+    '16mins': p.df['PIP_Return_forward_looking_for_16mins_max'],
+    '32mins': p.df['PIP_Return_forward_looking_for_32mins_max']
+})
 
 #%%
 # from forex.utils import *

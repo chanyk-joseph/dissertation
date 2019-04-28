@@ -1,71 +1,34 @@
-import os.path as path
 import sys
-
+import os
+import os.path as path
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-from forex.utils import *
-from sklearn.preprocessing import MinMaxScaler
 from forex.OHLC import OHLC
 
-script_dir = path.dirname(path.realpath(sys.argv[0]))
-data_dir = "/home/joseph/Desktop/datastore"
-
-# def plot_earn_graph(df, buyColName):
-#     positions = []
-#     balance = 0
-#     df.at[list(df.index)[0], "balance"] = 0
-#     close_i = df.columns.get_loc('Close') 
-#     buyNext = False
-#     for i, row in enumerate(df.itertuples()):
-#         curTimestamp = row.Timestamp.to_pydatetime()
-#         curClose = row.Close
-#         isIncreasing = getattr(row, buyColName)
-
-#         if buyNext:
-#             positions.append({
-#                 'Close': curClose,
-#                 'Timestamp': row.Timestamp.to_pydatetime()
-#             })
-#             buyNext = False
-#         if isIncreasing == 1:
-#             buyNext = True
-#         if len(positions) > 0:
-#             shouldCutPositions = [pos for pos in positions if curClose - pos['Close'] <= -0.0050 or curClose - pos['Close'] >= 0.02 or (curTimestamp - pos['Timestamp']).total_seconds() >= 1800]
-#             for pendingCutPos in shouldCutPositions:
-#                 netProfit = curClose - pendingCutPos['Close']
-#                 # print(str(i) + ": " + str(netProfit) + " | balance: "+ str(balance))
-#                 balance += netProfit * 10000
-#                 positions.remove(pendingCutPos)
-#         df.loc[row.Index, 'balance'] = balance
-#     plot_fields(df, ['balance'])
-
-currencyPairs = ['AUDUSD', 'EURGBP', 'EURUSD', 'GBPJPY', 'GBPUSD', 'NZDUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'XAUUSD']
-
-
-import random, os, sys
+import tensorflow as tf
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 from tensorflow.keras.callbacks import *
 from tensorflow.keras.initializers import *
 import tensorflow.keras.backend as K
-import tensorflow as tf
 from tensorflow.python.keras.layers import Layer
 from tensorflow.python.keras.layers import CuDNNLSTM
 LSTM = CuDNNLSTM
 
-# try:
-#     from dataloader import TokenList, pad_to_longest
-#     # for transformer
-# except: pass
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+script_dir = path.dirname(path.realpath(sys.argv[0]))
+data_dir = "/home/joseph/Desktop/datastore"
+currencyPairs = ['AUDUSD', 'EURGBP', 'EURUSD', 'GBPJPY', 'GBPUSD', 'NZDUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'XAUUSD']
+
+
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 session = tf.compat.v1.InteractiveSession(config=config)
 
-embed_size = 60
+
 SEQ_LEN = 200  # how long of a preceeding sequence to collect for RNN
 
 class LayerNormalization(Layer):
@@ -169,96 +132,6 @@ class MultiHeadAttention():
         if not self.layer_norm: return outputs, attn
         # outputs = Add()([outputs, q]) # sl: fix
         return self.layer_norm(outputs), attn
-
-# class PositionwiseFeedForward():
-#     def __init__(self, d_hid, d_inner_hid, dropout=0.1):
-#         self.w_1 = Conv1D(d_inner_hid, 1, activation='relu')
-#         self.w_2 = Conv1D(d_hid, 1)
-#         self.layer_norm = LayerNormalization()
-#         self.dropout = Dropout(dropout)
-#     def __call__(self, x):
-#         output = self.w_1(x) 
-#         output = self.w_2(output)
-#         output = self.dropout(output)
-#         output = Add()([output, x])
-#         return self.layer_norm(output)
-
-# class EncoderLayer():
-#     def __init__(self, d_model, d_inner_hid, n_head, d_k, d_v, dropout=0.1):
-#         self.self_att_layer = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
-#         self.pos_ffn_layer  = PositionwiseFeedForward(d_model, d_inner_hid, dropout=dropout)
-#     def __call__(self, enc_input, mask=None):
-#         output, slf_attn = self.self_att_layer(enc_input, enc_input, enc_input, mask=mask)
-#         output = self.pos_ffn_layer(output)
-#         return output, slf_attn
-
-
-# def GetPosEncodingMatrix(max_len, d_emb):
-#     pos_enc = np.array([
-#         [pos / np.power(10000, 2 * (j // 2) / d_emb) for j in range(d_emb)] 
-#         if pos != 0 else np.zeros(d_emb) 
-#             for pos in range(max_len)
-#             ])
-#     pos_enc[1:, 0::2] = np.sin(pos_enc[1:, 0::2]) # dim 2i
-#     pos_enc[1:, 1::2] = np.cos(pos_enc[1:, 1::2]) # dim 2i+1
-#     return pos_enc
-
-# def GetPadMask(q, k):
-#     ones = K.expand_dims(K.ones_like(q, 'float32'), -1)
-#     mask = K.cast(K.expand_dims(K.not_equal(k, 0), 1), 'float32')
-#     mask = K.batch_dot(ones, mask, axes=[2,1])
-#     return mask
-
-# def GetSubMask(s):
-#     len_s = tf.shape(s)[1]
-#     bs = tf.shape(s)[:1]
-#     mask = K.cumsum(tf.eye(len_s, batch_shape=bs), 1)
-#     return mask
-
-# class Transformer():
-#     def __init__(self, len_limit, embedding_matrix, d_model=embed_size, \
-#             d_inner_hid=512, n_head=10, d_k=64, d_v=64, layers=2, dropout=0.1, \
-#             share_word_emb=False, **kwargs):
-#         self.name = 'Transformer'
-#         self.len_limit = len_limit
-#         self.src_loc_info = False # True # sl: fix later
-#         self.d_model = d_model
-#         self.decode_model = None
-#         d_emb = d_model
-
-#         pos_emb = Embedding(len_limit, d_emb, trainable=False, \
-#                             weights=[GetPosEncodingMatrix(len_limit, d_emb)])
-
-#         i_word_emb = Embedding(max_features, d_emb, weights=[embedding_matrix]) # Add Kaggle provided embedding here
-
-#         self.encoder = Encoder(d_model, d_inner_hid, n_head, d_k, d_v, layers, dropout, \
-#                             word_emb=i_word_emb, pos_emb=pos_emb)
-
-        
-#     def get_pos_seq(self, x):
-#         mask = K.cast(K.not_equal(x, 0), 'int32')
-#         pos = K.cumsum(K.ones_like(x, 'int32'), 1)
-#         return pos * mask
-
-#     def compile(self, active_layers=999):
-#         src_seq_input = Input(shape=(None, ))
-#         x = Embedding(max_features, embed_size, weights=[embedding_matrix])(src_seq_input)
-        
-#         # LSTM before attention layers
-#         x = Bidirectional(LSTM(128, return_sequences=True))(x)
-#         x = Bidirectional(LSTM(64, return_sequences=True))(x) 
-        
-#         x, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1)(x, x, x)
-        
-#         avg_pool = GlobalAveragePooling1D()(x)
-#         max_pool = GlobalMaxPooling1D()(x)
-#         conc = concatenate([avg_pool, max_pool])
-#         conc = Dense(64, activation="relu")(conc)
-#         x = Dense(1, activation="sigmoid")(conc)   
-        
-        
-#         self.model = Model(inputs=src_seq_input, outputs=x)
-#         self.model.compile(optimizer = 'adam', loss = 'mean_squared_error', metrics=['accuracy'])
 
 def build_model():
     inp = Input(shape = (SEQ_LEN, 1))
@@ -382,207 +255,3 @@ plt.show()
 
 print('sss')
 sys.exit()
-
-
-# p = OHLC(path.join('F:\\modified_data', 'USDJPY_Daily_(1-1-2008_31-12-2017).csv'))
-# p.plot_fields('Close')
-# sys.exit()
-
-# p = OHLC(path.join('F:\\modified_data', 'balance_forward_16_04.csv'))
-# p.plot_fields('Balance')
-# sys.exit()
-
-p = OHLC(path.join('F:\\modified_data', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns.csv'))
-p.plot_fields('Normalized_PIP_Return_forward_looking_for_16mins_max', [], parseISODateTime('2010-01-01T00:00:00'), parseISODateTime('2010-12-31T00:00:00'))
-sys.exit()
-
-# p = OHLC(path.join('F:\\modified_data', 'USDJPY_1MIN_(1-1-2008_31-12-2017).csv'))
-# p.set_df(p.get_df_with_resolution('1min'))
-# p.merge_df(p.get_mins_returns_cols([1,2,4,8,16,32], 'mins'))
-# p.merge_df(p.get_normalized_price([15, 30, 60, 120, 240, 1440, 10080, 43200], 'mins'))
-# p.save(path.join('F:\\modified_data', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns_2.csv'))
-# sys.exit()
-
-for currencyPair in currencyPairs:
-    p = OHLC(path.join('F:\\modified_data', currencyPair+'_1MIN_(1-1-2008_31-12-2017).csv'))
-    p.set_df(p.get_df_with_resolution('1min'))
-    p.merge_df(p.get_mins_returns_cols([1,2,4,8,16,32], 'mins'))
-    p.merge_df(p.get_normalized_price([15, 30, 60, 120, 240, 1440, 10080, 43200], 'mins'))
-    p.save(path.join('F:\\modified_data', currencyPair+'_1MIN_(1-1-2008_31-12-2017)_with_returns.csv'))
-sys.exit()
-
-
-cl = df['Close'].as_matrix().reshape(-1, 1)
-scaler = MinMaxScaler()
-scaler.fit(cl)
-cl = scaler.transform(cl)
-print(cl)
-df['norm_Close'] = cl
-print(df)
-df['Close'] = df['Close'] / 100
-plot_fields(df, ['Close', 'norm_Close'])
-
-'''
-tradeRecordCSV = path.join(script_dir, 'trade-record-simple.csv')
-ohlcCSV = path.join(data_dir, 'EURUSD_Daily_(1-1-2008_31-12-2017).csv')
-# df = set_df_Timestamp_as_datetime(pd.read_csv(ohlcCSV))
-# print(get_df_by_datetime_range(df, parseISODateTime('2008-01-02T00:00:00'), parseISODateTime('2017-01-03T00:00:00')))
-# close = np.random.random(100)
-# smaStrategy = SMA(60*60*24*3) 
-# result = smaStrategy.calculate(df, parseISODateTime('2001-01-07T00:00:00'))
-# print(result)
-# plt.plot(result)
-# plt.ylabel('some numbers')
-# plt.show()
-
-
-# ohlc_s_csv = path.join(data_dir, 'EURUSD_1MIN_(1-1-2008_31-12-2017).csv')
-# df = set_df_Timestamp_as_datetime(pd.read_csv(ohlc_s_csv))
-# df.index = pd.DatetimeIndex(df['Timestamp'])
-# df = df.resample('1D').pad()
-# macd, macdsignal, macdhist = talib.MACD(df['Close'], fastperiod=12, slowperiod=26, signalperiod=9)
-# plt.plot(macdhist, label='macdhist')
-# macd = MACD()
-# singal, signal_strength = macd.generate_signal(df)
-# plt.plot(signal_strength / 50, label='signal_strength')
-# plt.plot(singal * signal_strength / 50, label='signal')
-# plt.axhline(y=0, color='r', linestyle='-')
-# plt.ylabel('some numbers')
-# plt.legend()
-# plt.show()
-
-ohlc_s_csv = path.join(data_dir, 'USDJPY_1MIN_(1-1-2008_31-12-2017).csv')
-df = set_df_Timestamp_as_datetime(pd.read_csv(ohlc_s_csv))
-df.index = pd.DatetimeIndex(df['Timestamp'])
-df = df.resample('5min').pad() # pad: fill NaN with previous value 
-
-
-
-
-# Calculate log return, and forward looking to generate
-df['LogReturn'] = np.log(df.Close/df.Close.shift(1))
-df['Forward5LogReturn'] = df['LogReturn'][::-1].rolling(5).sum()[::-1] - df['LogReturn']
-df['Forward10LogReturn'] = df['LogReturn'][::-1].rolling(10).sum()[::-1] - df['LogReturn']
-# df['Forward15LogReturn'] = df['LogReturn'][::-1].rolling(15).sum()[::-1] - df['LogReturn']
-# df['Forward30LogReturn'] = df['LogReturn'][::-1].rolling(30).sum()[::-1] - df['LogReturn']
-# df['Forward60LogReturn'] = df['LogReturn'][::-1].rolling(60).sum()[::-1] - df['LogReturn']
-# df['Forward360LogReturn'] = df['LogReturn'][::-1].rolling(360).sum()[::-1] - df['LogReturn']
-
-print(df.head(10))
-print(df.tail(10))
-
-records = df
-# plt.plot(records["Close"] / 100000, label='Close')
-plt.plot(records["Forward5LogReturn"], label='Forward5LogReturn')
-plt.plot(records["Forward10LogReturn"], label='Forward10LogReturn')
-# plt.plot(records["Forward5LogReturn"], label='Forward5LogReturn')
-# plt.plot(records["Forward15LogReturn"], label='Forward15LogReturn')
-# plt.plot(records["Forward30LogReturn"], label='Forward30LogReturn')
-# plt.plot(records["Forward60LogReturn"], label='Forward60LogReturn')
-# plt.plot(records["Forward360LogReturn"], label='Forward360LogReturn')
-plt.axhline(y=0, color='r', linestyle='-')
-plt.ylabel('some numbers')
-plt.legend()
-plt.show()
-
-sys.exit()
-
-
-
-
-
-macd = MACD()
-df = macd.generate_buy_sell_records(df)
-
-
-
-
-print(df.head())
-df = df.loc[abs(df["MACD"])==1]
-print(df.head())
-print(len(df.index))
-
-
-records = df.loc[abs(df['MACD'])==1]
-records['CloseDiff'] = records['Close'].diff()
-records['MACDDiff'] = records['MACD'].diff()
-records.at[list(records.index)[0], "cash_balance"] = 100
-records.at[list(records.index)[0], "holding_units"] = 0
-records.at[list(records.index)[0], "total_asset_value"] = 100
-print(records.head())
-
-close_i = records.columns.get_loc('Close')
-close_diff_i = records.columns.get_loc('CloseDiff')
-macd_col_i = records.columns.get_loc('MACD')
-macd_diff_col_i = records.columns.get_loc('MACDDiff')
-cash_balance_i = records.columns.get_loc('cash_balance')
-holding_units_i = records.columns.get_loc('holding_units')
-total_asset_value_i = records.columns.get_loc('total_asset_value')
-for i, row in enumerate(records.itertuples()):
-    if i == 0:
-        continue
-
-    curCloseDiff = records.iat[i, close_diff_i]
-    curMACD = records.iat[i, macd_col_i]
-    curMACDDiff = records.iat[i, macd_diff_col_i]
-
-    if curMACDDiff == -2:
-        records.iat[i, total_asset_value_i] = records.iat[i-1, total_asset_value_i] + curCloseDiff * 100
-    else:
-        records.iat[i, total_asset_value_i] = records.iat[i-1, total_asset_value_i]
-
-print(records.tail())
-plt.plot(records["Close"] * 100, label='Close')
-plt.plot(records["total_asset_value"], label='total_asset_value')
-plt.axhline(y=0, color='r', linestyle='-')
-plt.ylabel('some numbers')
-plt.legend()
-plt.show()
-
-sys.exit()
-
-
-
-
-
-df.at[list(df.index)[0], "cash_balance"] = 100
-df.at[list(df.index)[0], "holding_units"] = 0
-df.at[list(df.index)[0], "total_asset_value"] = 100
-
-print(df.head())
-for i, row in enumerate(df.itertuples()):
-    if i == 0:
-        continue
-
-    close_i = df.columns.get_loc('Close')
-    macd_col_i = df.columns.get_loc('MACD')
-    cash_balance_i = df.columns.get_loc('cash_balance')
-    holding_units_i = df.columns.get_loc('holding_units')
-    total_asset_value_i = df.columns.get_loc('total_asset_value')
-
-    curClose = df.iat[i, close_i]
-    curMACD = df.iat[i, macd_col_i]
-    curCash = df.iat[i, cash_balance_i] = df.iat[i-1, cash_balance_i]
-    curHolding = df.iat[i, holding_units_i] = df.iat[i-1, holding_units_i]
-    curTotal = df.iat[i, total_asset_value_i] = df.iat[i-1, total_asset_value_i]
-
-    if curMACD == 1 and curCash > 0:
-        curHolding += curCash / curClose
-        curCash = 0
-    elif curMACD == -1 and curHolding > 0:
-        curCash += curHolding * curClose
-        curHolding = 0
-    curTotal = curHolding * curClose + curCash
-
-    df.iat[i, cash_balance_i] = curCash
-    df.iat[i, holding_units_i] = curHolding
-    df.iat[i, total_asset_value_i] = curTotal
-    
-print(df.tail())
-plt.plot(df["Close"] * 100, label='Close')
-plt.plot(df["total_asset_value"], label='total_asset_value')
-plt.axhline(y=0, color='r', linestyle='-')
-plt.ylabel('some numbers')
-plt.legend()
-plt.show()
-'''
