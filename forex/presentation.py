@@ -1,6 +1,7 @@
 
-#%% Initialize path
+#%% Initialize Global Settings
 import platform
+import pandas as pd
 dataDir = ''
 if platform.system() == 'Windows':
     dataDir = 'F:\\modified_data'
@@ -9,23 +10,29 @@ elif platform.system() == 'Linux':
 else:
     exit()
 
+pd.set_option("display.max_rows", 10)
+pd.set_option("display.float_format", '{:,.3f}'.format)
+
 #%% Read data
 import os.path as path
 import pandas as pd
 from forex.OHLC import OHLC
 
 currencyPair = 'USDJPY'
-# p = OHLC(path.join(dataDir, currencyPair+'_1MIN_(1-1-2008_31-12-2017)_with_returns_simple.csv'))
 p = OHLC(path.join(dataDir, currencyPair+'_1MIN_(1-1-2008_31-12-2017).csv'))
-print(p.df.head())
+p.df.drop(['Timestamp'], axis=1)
 
 #%% Convert to 1min interval and fill missing records with previous values
 p.set_df(p.get_df_with_resolution('1min'))
 
 #%% Calculate pip returns within future X mins
 p.merge_df(p.get_mins_returns_cols([1,2,4,8,16,32], 'mins'))
+p.df.dtypes
 
-#%% print
+#%% 
+p.df.drop(['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'], axis=1)
+
+#%% 
 pd.DataFrame({
     '1mins': p.df['PIP_Return_forward_looking_for_1mins_max'],
     '2mins': p.df['PIP_Return_forward_looking_for_2mins_max'],
@@ -35,7 +42,7 @@ pd.DataFrame({
     '32mins': p.df['PIP_Return_forward_looking_for_32mins_max']
 })
 
-#%%
+#%% Select subset of data
 # from forex.utils import *
 # mask = (p.df['Timestamp'] >= parseISODateTime('2011-05-01T00:00:00')) & (p.df['Timestamp'] <= parseISODateTime('2011-08-12T00:00:00'))
 # p.set_df(p.df.loc[mask])
@@ -64,6 +71,7 @@ newdf = pd.DataFrame(results, index=indexes)
 newdf
 
 #%% Get the percentile boundary
+import numpy as np
 percentiles = ['3', '16', '50', '84', '97']
 results = {}
 colToBeUsed = p.df['PIP_Return_forward_looking_for_32mins_max'].dropna()
@@ -90,12 +98,29 @@ for percentile in percentiles:
     bins.append(results[percentile])
 bins.append(9999999)
 # bins
-p.df['binned_signal'] = pd.cut(p.df['PIP_Return_forward_looking_for_32mins_max'], bins, labels=[1, 2, 3, 4, 5, 6])
-print(p.df.groupby(p.df['binned_signal']).size())
-p.df.groupby(p.df['binned_signal']).size().plot()
+p.df['Signal'] = pd.cut(p.df['PIP_Return_forward_looking_for_32mins_max'], bins, labels=[1, 2, 3, 4, 5, 6])
+p.df[['Signal']]
+
+#%%
+print(p.df.groupby(p.df['Signal']).size())
+p.df.groupby(p.df['Signal']).size().plot()
 
 
 #%%
+df = p.df[['Timestamp', 'Close', 'Signal']].copy()
+dfDict = df.to_dict('split')
+for i in range(1, 7):
+    print('============='+str(i)+'==============')
+    tradeDf = p.backtest(i, dfDict)
+    tradeDf.describe()
+    print('Number of trades: ' + str(len(tradeDf.index)))
+    print('Final Balance: ' + str(tradeDf[-1:].Balance))
+    tradeDf[['Balance']].plot()
+
+
+#%% talib
 import talib
-df = p.df.loc[:, ['Open', 'High', 'Low','Close']].copy()
-talib.CDLTRISTAR(df['Open'], df['High'], df['Low'], df['Close'])
+df = p.df.loc[:, ['Open', 'High', 'Low','Close']].copy().dropna()
+# tt = talib.CDLTRISTAR(df['Open'], df['High'], df['Low'], df['Close'])
+df['CDLTRISTAR'] = talib.CDLTRISTAR(df['Open'], df['High'], df['Low'], df['Close'])
+df[['CDLTRISTAR']].describe()

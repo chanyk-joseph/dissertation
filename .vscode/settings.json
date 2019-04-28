@@ -1,5 +1,6 @@
 {
     "python.pythonPath": "/home/joseph/anaconda3/envs/dissertation/bin/python",
+    "python.linting.enabled": false,
     "python.analysis.disabled": [
         "unresolved-import"
     ]

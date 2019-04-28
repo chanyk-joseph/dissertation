@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import MinMaxScaler
 
+
+from forex.utils import *
+
 class OHLC:
     def __init__(self, csv_path):
         self.csv_path = csv_path
@@ -66,6 +69,44 @@ class OHLC:
         df = df[~allDateTimesAfterResample.isin(allDateTimesAfterResample.difference(validDateTimes))]
 
         return df
+
+    def backtest(self, minSignal, dfDict=None):
+        if dfDict == None:
+            df = self.df[['Timestamp', 'Close', 'Signal']].copy()
+            dfDict = df.to_dict('split')
+
+        trades = {'Timestamp': [], 'Balance': []}
+        positions = []
+        balance = 0
+        buyNext = False
+        i = 0
+        for row in dfDict['data']:
+            timestamp = row[0]
+            curClose = row[1]
+            signal = row[2]
+
+            i += 1
+            if i%500000 == 0:
+                print('Backtesting | Progress: ' + str(i))
+
+            if buyNext:
+                positions.append({
+                    'Close': curClose,
+                    'Timestamp': timestamp
+                })
+                buyNext = False
+            if signal>=minSignal:
+                buyNext = True
+            if len(positions) > 0:
+                shouldCutPositions = [pos for pos in positions if curClose - pos['Close'] <= -0.0050 or curClose - pos['Close'] >= 0.02 or (timestamp - pos['Timestamp']).total_seconds() >= 1800]
+                for pendingCutPos in shouldCutPositions:
+                    netProfit = curClose - pendingCutPos['Close']
+                    balance += netProfit * 10000
+                    positions.remove(pendingCutPos)
+
+                    trades['Timestamp'].append(timestamp)
+                    trades['Balance'].append(balance)
+        return pd.DataFrame(trades, index=pd.DatetimeIndex(trades['Timestamp']))
 
     def get_normalized_price(self, rollingPeriods, unit):
         # cl = self.df['Close'].values.copy().reshape(-1, 1)
@@ -138,30 +179,33 @@ class OHLC:
                 df['PIP_Return_forward_looking_for_'+str(period)+unit+'_min'] = df.loc[:, colToBeUsed].min(axis=1)
                 df['PIP_Return_forward_looking_for_'+str(period)+unit+'_max'] = df.loc[:, colToBeUsed].max(axis=1)
 
-                vals = df['PIP_Return_forward_looking_for_'+str(period)+unit+'_max'].values.copy().reshape(-1, 1)
-                scaler = MinMaxScaler()
-                smoothing_window_size = 10000
-                for di in range(0, len(vals), smoothing_window_size):
-                    scaler.fit(vals[di:di+smoothing_window_size])
-                    vals[di:di+smoothing_window_size] = scaler.transform(vals[di:di+smoothing_window_size])
-                df['Normalized_PIP_Return_forward_looking_for_'+str(period)+unit+'_max'] = vals
+                # disable calculating normalized returns because switch to use predict class
+                # vals = df['PIP_Return_forward_looking_for_'+str(period)+unit+'_max'].values.copy().reshape(-1, 1)
+                # scaler = MinMaxScaler()
+                # smoothing_window_size = 10000
+                # for di in range(0, len(vals), smoothing_window_size):
+                #     scaler.fit(vals[di:di+smoothing_window_size])
+                #     vals[di:di+smoothing_window_size] = scaler.transform(vals[di:di+smoothing_window_size])
+                # df['Normalized_PIP_Return_forward_looking_for_'+str(period)+unit+'_max'] = vals
             return df
 
         df = self.df.loc[:, ['Close']].copy()
         # df = calculate_log_returns(df, rollingPeriods)
         df = calculate_pips_return(df, rollingPeriods)
         # print(len(df.index))
-        for i, period in enumerate(rollingPeriods):
-            if period == 1:
-                df['is_all_forward_looking_increasing_within_1'+unit] = np.where(df['PIP_Return_forward_looking_for_1'+unit+'_sum'] > 0, 1, 0)
-                continue
 
-            df['is_all_forward_looking_increasing_within_'+str(period)+unit] = 1
-            cols = []
-            for i, previousPeriod in enumerate(rollingPeriods[0:i+1]):
-                cols.append('PIP_Return_forward_looking_for_'+str(previousPeriod)+unit+'_sum')
-                if i >= 1:
-                    df['is_all_forward_looking_increasing_within_'+str(period)+unit] = np.where(df['is_all_forward_looking_increasing_within_'+str(period)+unit] & (df[cols[i]] > df[cols[i-1]]), 1, 0)
+        # disable is_all_forward_looking
+        # for i, period in enumerate(rollingPeriods):
+        #     if period == 1:
+        #         df['is_all_forward_looking_increasing_within_1'+unit] = np.where(df['PIP_Return_forward_looking_for_1'+unit+'_sum'] > 0, 1, 0)
+        #         continue
+
+        #     df['is_all_forward_looking_increasing_within_'+str(period)+unit] = 1
+        #     cols = []
+        #     for i, previousPeriod in enumerate(rollingPeriods[0:i+1]):
+        #         cols.append('PIP_Return_forward_looking_for_'+str(previousPeriod)+unit+'_sum')
+        #         if i >= 1:
+        #             df['is_all_forward_looking_increasing_within_'+str(period)+unit] = np.where(df['is_all_forward_looking_increasing_within_'+str(period)+unit] & (df[cols[i]] > df[cols[i-1]]), 1, 0)
 
         # buy_signal = df['is_all_forward_looking_increasing_within_1min'].where(lambda x : x == 1).dropna()
         # print(len(df.index))
