@@ -134,7 +134,7 @@ allTrades[5].to_csv(path.join(dataDir, 'signal6.csv'), sep=',', encoding='utf-8'
 
 #%% talib
 import talib
-df = p.df.loc[:, ['Open', 'High', 'Low','Close']].copy().dropna()
+df = p.df.loc[:, ['Open', 'High', 'Low','Close', 'Signal']].copy().dropna()
 df['CDLTRISTAR'] = talib.CDLTRISTAR(df['Open'], df['High'], df['Low'], df['Close'])
 df[['CDLTRISTAR']].describe()
 df
@@ -142,14 +142,63 @@ df
 #%% Get all pattern detection algorithm from talib
 from inspect import getmembers, isfunction
 functs = [o for o in getmembers(talib) if isfunction(o[1])]
+featuresToBeUsed = []
 for func in functs:
     funcName = func[0]
     if funcName.startswith('CDL'):
         print('Computing Pattern Features Using talib: ' + funcName)
+        featuresToBeUsed.append(funcName)
         df[funcName] = getattr(talib, funcName)(df['Open'], df['High'], df['Low'], df['Close']) / 100
 tmp = df.describe().T
 tmp
 
 #%% 
-df.info()
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 
+tmp = df.copy()
+
+tmp['Normalized_Close'] = ((tmp['Close'] - tmp['Close'].rolling(43200).min()) / (tmp['Close'].rolling(43200).max() - tmp['Close'].rolling(43200).min())).fillna(method='ffill')
+featuresToBeUsed.append('Normalized_Close')
+
+tmp.dropna(inplace=True)
+train, test = train_test_split(tmp, test_size=0.2, shuffle=True)
+print(len(tmp.index))
+print(len(train.index))
+print(len(test.index))
+
+#%%
+X_train = train[featuresToBeUsed].as_matrix()
+Y_train = train['Signal'].as_matrix()
+
+X_test = test[featuresToBeUsed].as_matrix()
+Y_test = test['Signal'].as_matrix()
+
+# Y_train = train.pop('Signal')
+# Y_train
+
+#%% Stochastic gradient descent (SGD) learning algorithms
+from sklearn import linear_model
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import Perceptron
+from sklearn.linear_model import SGDClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC, LinearSVC
+from sklearn.naive_bayes import GaussianNB
+
+sgd = linear_model.SGDClassifier(max_iter=20, tol=None)
+sgd.fit(X_train, Y_train)
+Y_pred = sgd.predict(X_test)
+sgd.score(X_train, Y_train)
+acc_sgd = round(sgd.score(X_train, Y_train) * 100, 2)
+print(round(acc_sgd,2,), "%")
+
+#%% Random Forest
+random_forest = RandomForestClassifier(n_estimators=100)
+random_forest.fit(X_train, Y_train)
+Y_prediction = random_forest.predict(X_test)
+random_forest.score(X_train, Y_train)
+acc_random_forest = round(random_forest.score(X_train, Y_train) * 100, 2)
+print(round(acc_random_forest,2,), "%")
