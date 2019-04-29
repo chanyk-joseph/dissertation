@@ -42,11 +42,6 @@ pd.DataFrame({
     '32mins': p.df['PIP_Return_forward_looking_for_32mins_max']
 })
 
-#%% Select subset of data
-# from forex.utils import *
-# mask = (p.df['Timestamp'] >= parseISODateTime('2011-05-01T00:00:00')) & (p.df['Timestamp'] <= parseISODateTime('2011-08-12T00:00:00'))
-# p.set_df(p.df.loc[mask])
-
 #%% Maximum actual returns within following mins in the future
 import numpy as np
 key = 'max'
@@ -130,15 +125,31 @@ for i in range(0, 6):
     })
     indexes.append('Signal_' + str(i+1))
 tmpDf = pd.DataFrame(results, index=indexes)
-tmpDf['Max Drawdown'].plot()
+tmpDf[['Final Balance', 'Max Drawdown']].plot()
+tmpDf
 
 #%% 
 # mergedDf.plot()
-# t.to_csv(path.join(dataDir, 'signal4.csv'), sep=',', encoding='utf-8', index=False)
+allTrades[5].to_csv(path.join(dataDir, 'signal6.csv'), sep=',', encoding='utf-8', index=False)
 
 #%% talib
 import talib
 df = p.df.loc[:, ['Open', 'High', 'Low','Close']].copy().dropna()
-# tt = talib.CDLTRISTAR(df['Open'], df['High'], df['Low'], df['Close'])
 df['CDLTRISTAR'] = talib.CDLTRISTAR(df['Open'], df['High'], df['Low'], df['Close'])
 df[['CDLTRISTAR']].describe()
+df
+
+#%% Get all pattern detection algorithm from talib
+from inspect import getmembers, isfunction
+functs = [o for o in getmembers(talib) if isfunction(o[1])]
+for func in functs:
+    funcName = func[0]
+    if funcName.startswith('CDL'):
+        print('Computing Pattern Features Using talib: ' + funcName)
+        df[funcName] = getattr(talib, funcName)(df['Open'], df['High'], df['Low'], df['Close']) / 100
+tmp = df.describe().T
+tmp
+
+#%% 
+df.info()
+
