@@ -36,6 +36,10 @@ class OHLC:
         self.df.to_csv(filepath, sep=',', encoding='utf-8', index=False)
         return self
 
+    def select_time_range(start_t_str, end_t_str):
+        mask = (self.df['Timestamp'] >= parseISODateTime(start_t)) & (self.df['Timestamp'] <= parseISODateTime(end_t))
+        return self.df.loc[mask]
+
     # p.plot_fields('Close', [], parseISODateTime('2010-01-01T00:00:00'), parseISODateTime('2010-12-31T00:00:00'))
     def plot_fields(self, leftCol, rightCols=[], start_t=None, end_t=None):
         df = None
@@ -75,11 +79,12 @@ class OHLC:
             df = self.df[['Timestamp', 'Close', 'Signal']].copy()
             dfDict = df.to_dict('split')
 
-        trades = {'Timestamp': [], 'Balance': []}
+        trades = {'Timestamp': [], 'Profit': [], 'Balance': []}
         positions = []
         balance = 0
         buyNext = False
         i = 0
+        previousSignal = 0
         for row in dfDict['data']:
             timestamp = row[0]
             curClose = row[1]
@@ -95,18 +100,29 @@ class OHLC:
                     'Timestamp': timestamp
                 })
                 buyNext = False
-            if signal>=minSignal:
+            if signal>=minSignal and signal-previousSignal>=1:
                 buyNext = True
             if len(positions) > 0:
                 shouldCutPositions = [pos for pos in positions if curClose - pos['Close'] <= -0.0050 or curClose - pos['Close'] >= 0.02 or (timestamp - pos['Timestamp']).total_seconds() >= 1800]
                 for pendingCutPos in shouldCutPositions:
                     netProfit = curClose - pendingCutPos['Close']
-                    balance += netProfit * 10000
+                    netProfitInPIP = netProfit * 10000
+                    balance += netProfitInPIP
                     positions.remove(pendingCutPos)
 
                     trades['Timestamp'].append(timestamp)
+                    trades['Profit'].append(netProfitInPIP)
                     trades['Balance'].append(balance)
-        return pd.DataFrame(trades, index=pd.DatetimeIndex(trades['Timestamp']))
+            previousSignal = signal
+        result = pd.DataFrame(trades, index=pd.DatetimeIndex(trades['Timestamp']))
+        result.drop_duplicates(subset='Timestamp', keep='last', inplace=True)
+
+        # Calculate drawdown
+        result['HighValue'] = result[['Balance']].cummax()
+        result['Drawdown'] = result['Balance'] - result['HighValue']
+        result.drop('HighValue', axis=1, inplace=True)
+
+        return result
 
     def get_normalized_price(self, rollingPeriods, unit):
         # cl = self.df['Close'].values.copy().reshape(-1, 1)

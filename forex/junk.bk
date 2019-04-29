@@ -231,3 +231,20 @@ plt.ylabel('some numbers')
 plt.legend()
 plt.show()
 '''
+
+
+
+#%% Compare the total returns between different signal classes
+mergedDf = None
+for i in range(1, 7):
+    print(i)
+    trade = allTrades[i-1].copy()
+    # trade = trade.groupby(['Timestamp'])['Balance'].sum().reset_index()
+    # trade.columns = ['Timestamp', 'Signal_'+str(i)+'_Profit', 'Signal_'+str(i)+'_Balance']
+    if i==1:
+        mergedDf = trade.set_index('Timestamp')
+    else:
+        mergedDf = mergedDf.join(trade.set_index('Timestamp'))
+mergedDf.fillna(method='ffill', inplace=True)
+mergedDf.fillna(0, inplace=True)
+mergedDf

@@ -80,7 +80,7 @@ for stat in percentiles:
 results
 
 
-#%% Convert percentile into signal classes: [
+#%% Convert percentile into corresponding signal class: [
 # 1 (0%  <= x <  3%), 
 # 2 (3%  <= x <  16%), 
 # 3 (16% <= x <  50%), 
@@ -101,22 +101,40 @@ bins.append(9999999)
 p.df['Signal'] = pd.cut(p.df['PIP_Return_forward_looking_for_32mins_max'], bins, labels=[1, 2, 3, 4, 5, 6])
 p.df[['Signal']]
 
-#%%
-print(p.df.groupby(p.df['Signal']).size())
-p.df.groupby(p.df['Signal']).size().plot()
+#%% Check the distribution of [1, 6] signal classes
+signalDf = p.df.groupby(p.df['Signal']).size().to_frame()
+signalDf.columns = ['Count']
+signalDf.plot()
+signalDf
 
 
-#%%
+#%% Get backtest results of all signals
+allTrades = []
 df = p.df[['Timestamp', 'Close', 'Signal']].copy()
 dfDict = df.to_dict('split')
 for i in range(1, 7):
-    print('============='+str(i)+'==============')
+    print('============= Signal_'+str(i)+' Performance ==============')
     tradeDf = p.backtest(i, dfDict)
-    tradeDf.describe()
-    print('Number of trades: ' + str(len(tradeDf.index)))
-    print('Final Balance: ' + str(tradeDf[-1:].Balance))
+    print('Final Balance: ' + str(float(tradeDf[-1:].Balance)))
     tradeDf[['Balance']].plot()
+    allTrades.append(tradeDf)
 
+#%% Findout which signal to be used, i.e. maximize profit while minimize drawdown
+results = []
+indexes = []
+for i in range(0, 6):
+    trade = allTrades[i]
+    results.append({
+        'Final Balance': float(trade[-1:].Balance),
+        'Max Drawdown': float(trade.describe()[['Drawdown']].loc['min'])
+    })
+    indexes.append('Signal_' + str(i+1))
+tmpDf = pd.DataFrame(results, index=indexes)
+tmpDf['Max Drawdown'].plot()
+
+#%% 
+# mergedDf.plot()
+# t.to_csv(path.join(dataDir, 'signal4.csv'), sep=',', encoding='utf-8', index=False)
 
 #%% talib
 import talib
