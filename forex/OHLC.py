@@ -33,11 +33,13 @@ class OHLC:
         return self
 
     def save(self, filepath):
-        self.df.to_csv(filepath, sep=',', encoding='utf-8', index=False)
+        d = self.df.copy()
+        d.round(6)
+        d.to_csv(filepath, sep=',', encoding='utf-8', index=False, float_format='%11.6f')
         return self
 
-    def select_time_range(start_t_str, end_t_str):
-        mask = (self.df['Timestamp'] >= parseISODateTime(start_t)) & (self.df['Timestamp'] <= parseISODateTime(end_t))
+    def select_time_range(self, start_t_str, end_t_str):
+        mask = (self.df['Timestamp'] >= parseISODateTime(start_t_str)) & (self.df['Timestamp'] <= parseISODateTime(end_t_str))
         return self.df.loc[mask]
 
     # p.plot_fields('Close', [], parseISODateTime('2010-01-01T00:00:00'), parseISODateTime('2010-12-31T00:00:00'))
@@ -92,7 +94,7 @@ class OHLC:
 
             i += 1
             if i%500000 == 0:
-                print('Backtesting | Progress: ' + str(i))
+                print('Backtesting | Processed Samples: ' + str(i))
 
             if buyNext:
                 positions.append({
@@ -157,6 +159,18 @@ class OHLC:
         df = self.df.loc[:, ['Close']].copy()
         normalize(df)
         df = df.drop('Close', axis=1)
+        return df
+
+    def get_pip_returns_for_intervals(self, intervals):
+        df = self.df[['Close']].copy()
+        pipReturn1Interval = df.Close.diff() * 10000
+        for interval in intervals:
+            if interval == 1:
+                df['PIP_Return_'+str(interval)] = pipReturn1Interval.shift(-1)
+            else:
+                df['Min_PIP_Return_'+str(interval)] = pipReturn1Interval[::-1].shift(1).rolling(interval).min()[::-1]
+                df['Max_PIP_Return_'+str(interval)] = pipReturn1Interval[::-1].shift(1).rolling(interval).max()[::-1]
+        df.drop(['Close'], axis=1, inplace=True)
         return df
 
     def get_mins_returns_cols(self, rollingPeriods, unit):

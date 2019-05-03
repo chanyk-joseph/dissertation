@@ -19,51 +19,34 @@ import pandas as pd
 from forex.OHLC import OHLC
 
 currencyPair = 'USDJPY'
-p = OHLC(path.join(dataDir, currencyPair+'_1MIN_(1-1-2008_31-12-2017).csv'))
-p.df.drop(['Timestamp'], axis=1)
+p = OHLC(path.join(dataDir, currencyPair+'_1MIN_(1-1-2008_31-12-2017)_with_signals.csv'))
+p.df.describe()
 
-#%% Convert to 1min interval and fill missing records with previous values
-p.set_df(p.get_df_with_resolution('1min'))
 
-#%% Calculate pip returns within future X mins
-p.merge_df(p.get_mins_returns_cols([1,2,4,8,16,32], 'mins'))
-p.df.dtypes
 
-#%% 
-p.df.drop(['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume'], axis=1)
+#%%
+p.df['Max_PIP_Return_1'].loc[(p.df['Max_PIP_Return_1']>=16190)]
+p.select_time_range('2011-10-25T00:00:00', '2011-11-02T00:00:00')['Close'].plot()
 
-#%% 
-pd.DataFrame({
-    '1mins': p.df['PIP_Return_forward_looking_for_1mins_max'],
-    '2mins': p.df['PIP_Return_forward_looking_for_2mins_max'],
-    '4mins': p.df['PIP_Return_forward_looking_for_4mins_max'],
-    '8mins': p.df['PIP_Return_forward_looking_for_8mins_max'],
-    '16mins': p.df['PIP_Return_forward_looking_for_16mins_max'],
-    '32mins': p.df['PIP_Return_forward_looking_for_32mins_max']
-})
+#%%
+import numpy as np
+mask = p.df['Max_PIP_Return_30'].loc[(p.df['Max_PIP_Return_30']>=1000) & (p.df['Max_PIP_Return_30']<=1001)]
+len(mask.index)
+# np.count_nonzero(mask)
+
+#%%
+import numpy as np
+tmp = p.df.copy()
+def convert_to_class(x):
+    if x>=500:
+        return
+tmp['Max_PIP_Return_1_class'] = tmp['Max_PIP_Return_1'].apply(lambda x: )
 
 #%% Maximum actual returns within following mins in the future
 import numpy as np
-key = 'max'
-arrKeys = ['PIP_Return_forward_looking_for_1mins_'+key,
-    'PIP_Return_forward_looking_for_2mins_'+key,
-    'PIP_Return_forward_looking_for_4mins_'+key,
-    'PIP_Return_forward_looking_for_8mins_'+key,
-    'PIP_Return_forward_looking_for_16mins_'+key,
-    'PIP_Return_forward_looking_for_32mins_'+key
-]
-
-indexes = []
-results = {'mean':[], 'std':[], '75%':[], '95%':[]}
-summary = p.df.loc[:, arrKeys].describe()
-for resol in [1,2,4,8,16,32]:
-    indexes.append(str(resol)+'mins')
-    resolStr = 'PIP_Return_forward_looking_for_' + str(resol) + 'mins'
-    for stat in ['mean', 'std', '75%']:
-        results[stat].append(summary[resolStr+'_'+key][stat])
-    results['95%'].append(np.percentile(p.df[resolStr+'_'+key].dropna(), 95))
-newdf = pd.DataFrame(results, index=indexes)
-newdf
+arrKeys = []
+for interval in intervals:
+    arrKeys.append('Max_PIP_Return_'+str(interval))
 
 #%% Get the percentile boundary
 import numpy as np
