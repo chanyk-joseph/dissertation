@@ -9,6 +9,7 @@ print(get_available_gpus())
 
 # Use specific GPU
 import tensorflow as tf
+import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '1' # 0: 2080ti | 1: 2070
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True

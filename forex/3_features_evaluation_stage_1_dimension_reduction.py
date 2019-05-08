@@ -25,7 +25,6 @@ print(currencyPairs)
 for currencyPair in currencyPairs:
     #%% Read both signal and pattern data
     directory = path.join(dataDir, currencyPair)
-    sys.stdout = open(path.join(directory, 'features_evaludation_stage_1_console_log.txt'), 'w')
 
     signalsDf = pd.read_csv(path.join(directory, 'signals.csv'))
     patternssDf = pd.read_csv(path.join(directory, 'patterns.csv'))
@@ -47,6 +46,7 @@ for currencyPair in currencyPairs:
     #%% Generate heat map to visualize correlation matrix of subset of features
     import matplotlib.pyplot as plt
     import seaborn as sns
+    plt.clf()
     sns.heatmap(mergedDf.iloc[:,11:41].corr(),annot=True,cmap='RdYlGn',linewidths=0.2)
     fig=plt.gcf()
     fig.set_size_inches(20,12)

@@ -20,6 +20,7 @@ LSTM = CuDNNLSTM
 
 script_dir = path.dirname(path.realpath(sys.argv[0]))
 data_dir = "/home/joseph/Desktop/datastore"
+# data_dir = '/hdd/temp'
 currencyPairs = ['AUDUSD', 'EURGBP', 'EURUSD', 'GBPJPY', 'GBPUSD', 'NZDUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'XAUUSD']
 
 
@@ -166,7 +167,7 @@ RATIO_TO_PREDICT = 'Normalized_PIP_Return_forward_looking_for_8mins_max'
 FUTURE_PERIOD_PREDICT = 1
 
 print('Reading CSV')
-p = OHLC(path.join('/home/joseph/Desktop/datastore', 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns.csv'))
+p = OHLC(path.join(data_dir, 'USDJPY_1MIN_(1-1-2008_31-12-2017)_with_returns.csv'))
 print('Readed')
 p.set_df(p.get_df_with_resolution('15min'))
 p.df.reset_index(drop=True)

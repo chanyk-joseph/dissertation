@@ -248,3 +248,215 @@ for i in range(1, 7):
 mergedDf.fillna(method='ffill', inplace=True)
 mergedDf.fillna(0, inplace=True)
 mergedDf
+
+
+
+
+#%%
+# print('X_test shape: ')
+# print(X_test.shape)
+# predicted_stock_price_multi_head = lstm_bert.predict(X_test)
+# print('predicted_stock_price_multi_head shape: ')
+# print(predicted_stock_price_multi_head.shape)
+# predicted_stock_price_multi_head = np.vstack((np.full((SEQ_LEN,1), np.nan), predicted_stock_price_multi_head))
+
+# session.close()
+
+
+#%%
+# reverseScaled_predicted_stock_price_multi_head = np.copy(predicted_stock_price_multi_head)
+
+# actualVals = test_df[['Close']].values
+# predictedVals = []
+# for i in range(SEQ_LEN, len(reverseScaled_predicted_stock_price_multi_head)):
+#     minMaxScaler.fit(actualVals[i-SEQ_LEN:i])
+#     reverseScaled_predicted_stock_price_multi_head[i] = minMaxScaler.inverse_transform([reverseScaled_predicted_stock_price_multi_head[i]])[0]
+
+# reverseScaled_predicted_stock_price_multi_head
+
+#%%
+# import matplotlib.pyplot as plt
+# print(predicted_stock_price_multi_head)
+# plt.figure(figsize = (18,9))
+# plt.plot(test_df[['Close']].values, color = 'red', label = 'Actual Price')
+# plt.plot(reverseScaled_predicted_stock_price_multi_head, color = 'green', label = 'Predicted Price')
+# plt.title('USDJPY Price Prediction', fontsize=30)
+# #plt.xticks(range(0,df.shape[0],50),df['Date'].loc[::50],rotation=45)
+# plt.xlabel('Date')
+# plt.ylabel('Price')
+# plt.legend(fontsize=18)
+# plt.show()
+
+#%%
+# prices = test_df[['Close']].values
+# act_diff = np.diff(prices.reshape(1,-1)[0])
+# predicted_diff = np.diff(reverseScaled_predicted_stock_price_multi_head.reshape(1,-1)[0]) #predicted_stock_price_multi_head.reshape(1, -1)[0] #np.diff(reverseScaled_predicted_stock_price_multi_head.reshape(1,-1)[0])
+# predicted_diff = np.copy(predicted_stock_price_multi_head)
+# predicted_diff = np.concatenate((np.array([np.nan]), np.diff(predicted_diff.reshape(1, -1)[0])), axis=None)
+
+# print('predicted_diff shape:')
+# print(type(predicted_diff))
+# print(predicted_diff.shape)
+# print(predicted_diff)
+
+#%%
+
+
+
+#%%
+
+# for i in range(0, len(predicted_diff)):
+#     if not np.isfinite(predicted_diff[i]):
+#         records.append(0)
+#         balance.append(0)
+#         continue
+#     if i>0 and not np.isfinite(predicted_diff[i-1]):
+#         records.append(0)
+#         balance.append(0)
+#         continue
+
+#     curPrice = prices[i-1][0]
+
+#     curPrediction = predicted_diff[i][0]
+#     prePrediction = predicted_diff[i-1][0]
+
+#     if curPrediction > prePrediction:
+#         long_cash_balance -= curPrice
+#         long_holding += 1
+
+#         short_cash_balance -= (short_holding * curPrice)
+#         short_holding = 0
+
+#         records.append(1)
+#     elif curPrediction < prePrediction:
+#         long_cash_balance += (long_holding * curPrice)
+#         long_holding = 0
+
+#         short_cash_balance += curPrice
+#         short_holding += 1
+
+#         records.append(-1)
+#     else:
+#         records.append(0)
+#     balance.append((long_cash_balance+(long_holding * curPrice)) + (short_cash_balance-(short_holding * curPrice)))
+
+# print('Long Holding & Balance:')
+# print(long_holding)
+# print(long_cash_balance)
+
+# print('Short Holding & Balance:')
+# print(short_holding)
+# print(short_cash_balance)
+
+# print(balance[-1])
+
+# # plt.figure(figsize = (18,9))
+# # plt.plot(balance, color = 'red', label = 'Actual Price')
+# # plt.plot(balance, color = 'red', label = 'Actual Price')
+# # plt.title('USDJPY Price Prediction', fontsize=30)
+# # plt.xlabel('Date')
+# # plt.ylabel('Price')
+# # plt.legend(fontsize=18)
+# # plt.show()
+
+
+# fig, ax1 = plt.subplots()
+# color = 'tab:red'
+# ax1.set_xlabel('Datetime')
+# ax1.set_ylabel('Price', color=color)
+# ax1.plot(prices, label='Price', color=color)
+# ax1.tick_params(axis='y', labelcolor=color)
+# ax1.legend()
+
+# ax2 = ax1.twinx()
+# ax2.plot(balance, label='Balance')
+# ax2.legend()
+
+# fig.tight_layout()
+# plt.show()
+
+
+
+
+
+
+
+
+
+
+# #%%
+
+# p = OHLC(path.join(dataDir, 'USDJPY_1MIN_(1-1-2008_31-12-2017).csv'))
+# # p.set_df(p.get_df_with_resolution('30min'))
+
+# p.df.reset_index(drop=True, inplace=True)
+
+# print(p.df['Close'])
+# minMaxScale = lambda x: minMaxScaler.fit_transform(x.reshape(-1,1)).reshape(1, len(x))[0][-1]
+# rollingWindow = 24 * 30 * 6
+# p.df['MinMaxScaled_Open'] = p.df['Open'].rolling(rollingWindow).apply(minMaxScale)
+# p.df['MinMaxScaled_High'] = p.df['High'].rolling(rollingWindow).apply(minMaxScale)
+# p.df['MinMaxScaled_Low'] = p.df['Low'].rolling(rollingWindow).apply(minMaxScale)
+# p.df['MinMaxScaled_Close'] = p.df['Close'].rolling(rollingWindow).apply(minMaxScale)
+
+# #%%
+# df = p.df
+
+# #%%
+# allData = df[['MinMaxScaled_Close']].values
+# X_allData = []
+# for i in range(SEQ_LEN, len(allData)):
+#     X_allData.append(allData[i-SEQ_LEN:i])
+
+# predicted_stock_price_multi_head_val = lstm_bert.predict(np.array(X_allData))
+# print(predicted_stock_price_multi_head_val.shape)
+# predicted_stock_price_multi_head_val = np.vstack((np.full((SEQ_LEN,1), np.nan), predicted_stock_price_multi_head_val))
+
+# reverseScaled_predicted_stock_price_multi_head_val = np.copy(predicted_stock_price_multi_head_val)
+
+# actualVals = df[['Close']].values
+# predictedVals = []
+# for i in range(SEQ_LEN, len(reverseScaled_predicted_stock_price_multi_head_val)):
+#     minMaxScaler.fit(actualVals[i-SEQ_LEN:i])
+#     reverseScaled_predicted_stock_price_multi_head_val[i] = minMaxScaler.inverse_transform([reverseScaled_predicted_stock_price_multi_head_val[i]])[0]
+
+# reverseScaled_predicted_stock_price_multi_head_val
+
+
+# act_diff = np.diff(df[['Close']].values.reshape(1,-1)[0])
+# predicted_diff = np.diff(reverseScaled_predicted_stock_price_multi_head_val.reshape(1,-1)[0])
+
+# prices = df[['Close']].values
+# cash_balance = 0
+# holding = 0
+
+# records = [0]
+# balance = [0]
+# for i in range(0, len(predicted_diff)):
+#     if not np.isfinite(predicted_diff[i]):
+#         records.append(0)
+#         balance.append(0)
+#         continue
+#     if i>0 and not np.isfinite(predicted_diff[i-1]):
+#         records.append(0)
+#         balance.append(0)
+#         continue
+
+#     curPrice = prices[i-1][0]
+#     if predicted_diff[i] > predicted_diff[i-1]:
+#         cash_balance -= curPrice
+#         holding += 1
+#         records.append(1)
+#     elif predicted_diff[i] < predicted_diff[i-1]:
+#         cash_balance += curPrice
+#         holding -= 1
+#         records.append(-1)
+#     else:
+#         records.append(0)
+#     balance.append(cash_balance+(holding * curPrice))
+
+# print(holding)
+# print(cash_balance)
+# plt.plot(balance, color = 'red', label = 'Actual Price')
+
+

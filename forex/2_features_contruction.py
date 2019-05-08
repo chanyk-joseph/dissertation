@@ -28,7 +28,7 @@ print(currencyPairs)
 if 'patterns' in featureTypes:
     for currencyPair in currencyPairs:
         directory = path.join(dataDir, currencyPair)
-        sys.stdout = open(path.join(directory, 'features_contruction_console_log.txt'), 'w')
+        # sys.stdout = open(path.join(directory, 'features_contruction_console_log.txt'), 'w')
 
         p = OHLC(path.join(dataDir, currencyPair+'_1MIN_(1-1-2008_31-12-2017).csv'))
         p.set_df(p.get_df_with_resolution('1min'))
