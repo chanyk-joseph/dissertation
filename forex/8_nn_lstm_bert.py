@@ -24,6 +24,7 @@ import os.path as path
 from forex.OHLC import OHLC
 
 isRedo = False
+isIncrementalTrain = True
 splitByVolume = True
 volumeBin = 1000
 currencyPair = 'USDJPY'
@@ -32,10 +33,10 @@ rollingWindow = 10000
 SEQ_LEN = 200
 FUTURE_PERIOD_PREDICT = 1
 BATCH_SIZE = 1024
-EPOCHS = 20
+EPOCHS = 10
 RATIO_TO_PREDICT = ['MinMaxScaled_Close']
 
-directory = path.join(dataDir, currencyPair)
+directory = path.join(dataDir, currencyPair, 's8')
 
 
 #%%
@@ -43,10 +44,21 @@ from sklearn.preprocessing import MinMaxScaler
 minMaxScaler = MinMaxScaler(feature_range=(0,1))
 
 normalizedCSV = path.join(directory, 'resol_'+resol+'-splitByVolume_'+str(splitByVolume)+'-volumeBin_'+str(volumeBin)+'_normalized.parq')
+
+#%%
+p = OHLC(path.join(dataDir, currencyPair+'_1MIN_(1-1-2008_31-12-2017).csv'))
+
+
+#%%
+resolutions = ['D', '6H', '3H', '1H', '30min', '15min', '10min', '5min', '1min']
+multiResolFeatures = ['Open', 'High', 'Low', 'Close', 'Volume']
+
+
+
+#%%
 df = None
 if not path.exists(normalizedCSV) or isRedo:
     p = OHLC(path.join(dataDir, currencyPair+'_1MIN_(1-1-2008_31-12-2017).csv'))
-
 
     if splitByVolume:
         # Resample by volume
@@ -102,11 +114,19 @@ if not path.exists(normalizedCSV) or isRedo:
     # p.df = p.df.iloc[0:200000,:]
     # print(p.df['Close'])
 
+    p.df['Open-Close'] = p.df['Open'] - p.df['Close']
+    p.df['High-Low'] = p.df['High'] - p.df['Low']
+    p.df['Actual_Log_Return'] = np.log(p.df['Close'].shift(-1) / p.df['Close'])
+
     minMaxScale = lambda x: minMaxScaler.fit_transform(x.reshape(-1,1)).reshape(1, len(x))[0][-1]
     p.df['MinMaxScaled_Open'] = p.df['Open'].rolling(rollingWindow).apply(minMaxScale)
     p.df['MinMaxScaled_High'] = p.df['High'].rolling(rollingWindow).apply(minMaxScale)
     p.df['MinMaxScaled_Low'] = p.df['Low'].rolling(rollingWindow).apply(minMaxScale)
     p.df['MinMaxScaled_Close'] = p.df['Close'].rolling(rollingWindow).apply(minMaxScale)
+
+    p.df['MinMaxScaled_Open-Close'] = p.df['Open-Close'].rolling(rollingWindow).apply(minMaxScale)
+    p.df['MinMaxScaled_High-Low'] = p.df['High-Low'].rolling(rollingWindow).apply(minMaxScale)
+
     p.df.dropna(inplace=True)
     p.df.reset_index(drop=True, inplace=True)
     df = p.df
@@ -119,15 +139,15 @@ else:
 times = sorted(df.index.values)  # get the times
 last_10pct = sorted(df.index.values)[-int(0.1*len(times))]  # get the last 10% of the times
 last_20pct = sorted(df.index.values)[-int(0.2*len(times))]  # get the last 20% of the times
-test_df_start_index = last_10pct
+test_df_start_index = 0
 
 test_df = df[(df.index >= last_10pct)]
 validation_df = df[(df.index >= last_20pct) & (df.index < last_10pct)]
 train_df = df[(df.index < last_20pct)]  # now the train_df is all the data up to the last 20%
 
-train_data = train_df[RATIO_TO_PREDICT].values
+train_data = df[RATIO_TO_PREDICT].values
 valid_data = validation_df[RATIO_TO_PREDICT].values
-test_data = test_df[RATIO_TO_PREDICT].values
+test_data = df[RATIO_TO_PREDICT].values
 
 X_train = []
 y_train = []
@@ -162,6 +182,7 @@ print(y_test.shape)
 import tensorflow as tf
 from forex.NN_Models import NN_Models
 from sklearn.utils import shuffle
+from tensorflow.python.keras.callbacks import ModelCheckpoint
 
 weight_file = path.join(directory, 'lstm-bert-BATCH_SIZE_'+str(BATCH_SIZE)+'-SEQ_LEN_'+str(SEQ_LEN)+'-FUTURE_PERIOD_PREDICT_'+str(FUTURE_PERIOD_PREDICT)+'-resol_'+resol+'-splitByVolume_'+str(splitByVolume)+'.h5')
 
@@ -174,157 +195,70 @@ session = tf.compat.v1.InteractiveSession(config=config)
 nn_models = NN_Models()
 lstm_bert = nn_models.get_LSTM_BERT(SEQ_LEN, FUTURE_PERIOD_PREDICT)
 
-if not path.exists(weight_file) or isRedo:
+def train(X_train, y_train, X_valid, y_valid):
     X_train, y_train = shuffle(X_train, y_train)
+
+    # filepath= path.join(directory, "weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5")
+    # checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+
     lstm_bert.fit(X_train, y_train,
                         batch_size=BATCH_SIZE,
                         epochs=EPOCHS,
                         validation_data=(X_valid, y_valid), 
-                        #callbacks = [checkpoint , lr_reduce]
+                        # callbacks = [checkpoint]
                 )
-    # Save JSON config to disk
-    # json_config = lstm_bert.to_json()
-    # with open(path.join(dataDir, 'USDJPY', 'lstm-bert-model-config.json'), 'w') as json_file:
-    #     json_file.write(json_config)
-    # Save weights to disk
     lstm_bert.save_weights(weight_file)
+
+if not path.exists(weight_file) or isRedo:
+    train(X_train, y_train, X_valid, y_valid)
 else:
     lstm_bert.load_weights(weight_file)
+    if isIncrementalTrain:
+        train(X_train, y_train, X_valid, y_valid)
 
 
 #%% Backtesting on test set
-prices = df[['Close']].values
-normalized_Price = df[['MinMaxScaled_Close']].values
+# from scipy.ndimage.interpolation import shift
+logReturns = df[['Actual_Log_Return']].copy().iloc[test_df_start_index+SEQ_LEN:,:]
 
-normalizedPrediction = lstm_bert.predict(X_test)
+predictionsFile = path.join(directory, 'predictions.parq')
+if path.exists(predictionsFile):
+    logReturns = pd.read_parquet(predictionsFile)
+else:
+    print('Start Predict')
+    predicted = lstm_bert.predict(X_test)
+    logReturns['Predicted_Normalized_Close'] = predicted.reshape(1,-1)[0]
+    # logReturns['Predicted_Normalized_Close'] = np.log(logReturns['Predicted_Normalized_Close'] / logReturns['Predicted_Normalized_Close'].shift(1)))
+    logReturns.to_parquet(predictionsFile)
 
-long_cash_balance = 0
-long_holding = 0
+print('Start Backtest')
+def genLong(x):
+    if x[1] > x[0] + 0.01:
+        return 1
+    elif x[1] < x[0] - 0.01:
+        return -1
+    else:
+        return 0
+logReturns['Signal'] = logReturns['Predicted_Normalized_Close'].rolling(2).apply(genLong)
+# logReturns['Signal'] = np.where(logReturns['Predicted_Normalized_Close'] > (logReturns['Predicted_Normalized_Close'].shift(1)+0.1),1,-1)
 
-short_cash_balance = 0
-short_holding = 0
+longCount = len(logReturns[logReturns['Signal'] == 1].index)
+shortCount = len(logReturns[logReturns['Signal'] == -1].index)
+totalCount = len(logReturns.index)
+print('totalCount: ' + str(totalCount))
+print('longCount: ' + str(longCount) + '('+str(longCount/totalCount*100)+'%)')
+print('shortCount: ' + str(shortCount) + '('+str(shortCount/totalCount*100)+'%)')
 
-balance = [0]
+# print(logReturns['Predicted_Normalized_Close'].head(10))
+# print(logReturns['Signal'].head(10))
 
-positions_balance = 0
-positions = []
+logReturns['Strategy_Return'] = logReturns['Actual_Log_Return'] * logReturns['Signal']
 
-long_count = 0
-short_count = 0
-pre = -1
-for i in tqdm(range(0, len(normalizedPrediction))):
-    predictions = normalizedPrediction[i]
-    originalStartIndex = test_df_start_index + SEQ_LEN + i
+actRet = logReturns['Actual_Log_Return'].cumsum()
+strRet = logReturns['Strategy_Return'].cumsum()
 
-    # previousSequence = np.array(prices[originalStartIndex-rollingWindow:originalStartIndex])
-    # minMaxScaler.fit(previousSequence)
-
-    # unscaledPredictions = minMaxScaler.inverse_transform([predictions])[0]
-    unscaledPredictions = predictions
-
-    curPrice = prices[originalStartIndex-1]
-
-    isIncreasing = False
-    isDecreasing = False
-    if len(unscaledPredictions) > 1:
-        isIncreasing = all(i < j for i,j in zip(unscaledPredictions, unscaledPredictions[1:]))
-        isDecreasing = all(i > j for i,j in zip(unscaledPredictions, unscaledPredictions[1:]))
-    elif len(unscaledPredictions) == 1:
-        # if curPrice < unscaledPredictions[0]:
-        #     isIncreasing = True
-        # if curPrice > unscaledPredictions[0]:
-        #     isDecreasing = True
-
-        if pre > 0:
-            if predictions[0] > pre:
-                isIncreasing = True
-                # isIncreasing = True
-            elif predictions[0] < pre: #predictions[0]+0.02 < pre:
-                isDecreasing = True
-        pre = predictions[0]
-
-    targetDirection = 0
-    if isIncreasing:
-        targetDirection = 1
-        long_count += 1
-    elif isDecreasing:
-        targetDirection = -1
-        short_count += 1
-
-
-    if targetDirection == 1:
-        positions.append({
-            'Direction': 1,
-            'Price': curPrice
-        })
-        long_cash_balance -= curPrice
-        long_holding += 1
-
-        short_cash_balance -= (short_holding * curPrice)
-        short_holding = 0
-    elif targetDirection == -1:
-        positions.append({
-            'Direction': -1,
-            'Price': curPrice
-        })
-        long_cash_balance += (long_holding * curPrice)
-        long_holding = 0
-
-        short_cash_balance += curPrice
-        short_holding += 1
-
-    def isCut(x):
-        if x['Direction'] == 1:
-            if x['Price'] - curPrice > 0:
-                return True
-            elif curPrice - x['Price'] < -0.02:
-                return True
-        elif x['Direction'] == -1:
-            if curPrice - x['Price'] < 0:
-                return True
-            elif curPrice - x['Price'] > 0.02:
-                return True
-        return False
-
-    cutPositions = [x for x in positions if isCut(x)]
-    positions[:] = [x for x in positions if not isCut(x)]
-    for position in cutPositions:
-        if position['Direction'] == 1:
-            positions_balance += (curPrice - position['Price'])
-        elif position['Direction'] == -1:
-            positions_balance += (position['Price'] - curPrice)
-    nonCloseBalance = 0
-    for position in positions:
-        if position['Direction'] == 1:
-            nonCloseBalance += (curPrice - position['Price'])
-        elif position['Direction'] == -1:
-            nonCloseBalance += (position['Price'] - curPrice)
-
-    # balance.append((long_cash_balance+(long_holding * curPrice)) + (short_cash_balance-(short_holding * curPrice)))
-    # balance.append((long_cash_balance+(long_holding * curPrice)))
-    # balance.append((short_cash_balance-(short_holding * curPrice)))
-    balance.append(positions_balance + nonCloseBalance)
-
-print('Long Holding & Balance:')
-print(long_holding)
-print(long_cash_balance)
-
-print('--- count ---')
-print('Long: '+str(long_count))
-print('Short: '+str(short_count))
-print('------')
-
-fig, ax1 = plt.subplots()
-color = 'tab:red'
-ax1.set_xlabel('Datetime')
-ax1.set_ylabel(currencyPair+' Price', color=color)
-ax1.plot(prices[test_df_start_index+SEQ_LEN:], label='Price', color=color)
-ax1.tick_params(axis='y', labelcolor=color)
-ax1.legend()
-
-ax2 = ax1.twinx()
-ax2.plot(balance, label='Balance')
-ax2.legend()
-
-fig.tight_layout()
+plt.figure(figsize=(10,5))
+plt.plot(actRet, color='r', label='Actual')
+plt.plot(strRet, color='g', label='Strategy')
+plt.legend()
 plt.show()

@@ -121,7 +121,7 @@ class NN_Models:
             x = Bidirectional(LSTM(128, return_sequences=True))(inp)
             x = Bidirectional(LSTM(64, return_sequences=True))(x) 
                 
-            x, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1)(x, x, x)
+            x, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1, mode=1)(x, x, x)
                 
             avg_pool = GlobalAveragePooling1D()(x)
             max_pool = GlobalMaxPooling1D()(x)
