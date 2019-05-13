@@ -29,15 +29,15 @@ splitByVolume = True
 volumeBin = 500
 currencyPair = 'USDJPY'
 resol = '1min'
-SEQ_LEN = 120
+SEQ_LEN = 150
 rollingWindow = SEQ_LEN
 FUTURE_PERIOD_PREDICT = 1
-BATCH_SIZE = 2048
-EPOCHS = 5
-FEATURES_COLS = ['MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low']
+BATCH_SIZE = 1024
+EPOCHS = 10
+FEATURES_COLS = ['MinMaxScaled_Return', 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low']
 TARGET_COLS = ['MinMaxScaled_Return']
 
-directory = path.join(dataDir, currencyPair, 's6')
+directory = path.join(dataDir, currencyPair, 's6_2')
 
 #%%
 from sklearn.preprocessing import MinMaxScaler
@@ -144,9 +144,6 @@ y_valid_data = validation_df[TARGET_COLS].values
 test_data = test_df[FEATURES_COLS].values
 y_test_data = test_df[TARGET_COLS].values
 
-all_data = df[FEATURES_COLS].values
-y_all_data = df[TARGET_COLS].values
-
 X_train = []
 y_train = []
 for i in range(SEQ_LEN, len(train_data)-(FUTURE_PERIOD_PREDICT-1)):
@@ -171,19 +168,10 @@ for i in range(SEQ_LEN, len(test_data)-(FUTURE_PERIOD_PREDICT-1)):
 X_test, y_test = np.array(X_test), np.array(y_test)
 # X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
 
-X_all = []
-y_all = []
-for i in range(SEQ_LEN, len(all_data)-(FUTURE_PERIOD_PREDICT-1)):
-    X_all.append(all_data[i-SEQ_LEN:i])
-    y_all.append(all_data[i:i+FUTURE_PERIOD_PREDICT][0])
-X_all, y_all = np.array(X_all), np.array(y_all)
-# X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
-
-
 print(y_train.shape)
 print(y_valid.shape)
 print(y_test.shape)
-print(y_all.shape)
+
 
 #%% Construct LSTM-BERT model
 import tensorflow as tf
@@ -191,10 +179,9 @@ from forex.NN_Models import NN_Models
 from sklearn.utils import shuffle
 from tensorflow.python.keras.callbacks import ModelCheckpoint
 
-#str(len(FEATURES_COLS))+
-weight_file = path.join(directory, str(len(FEATURES_COLS))+'test-multi-features-lstm-bert-BATCH_SIZE_'+str(BATCH_SIZE)+'-SEQ_LEN_'+str(SEQ_LEN)+'-FUTURE_PERIOD_PREDICT_'+str(FUTURE_PERIOD_PREDICT)+'-resol_'+resol+'-splitByVolume_'+str(splitByVolume)+'.h5')
+weight_file = path.join(directory, 'test-multi-features-lstm-bert-BATCH_SIZE_'+str(BATCH_SIZE)+'-SEQ_LEN_'+str(SEQ_LEN)+'-FUTURE_PERIOD_PREDICT_'+str(FUTURE_PERIOD_PREDICT)+'-resol_'+resol+'-splitByVolume_'+str(splitByVolume)+'.h5')
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 session = tf.compat.v1.InteractiveSession(config=config)
@@ -227,7 +214,7 @@ else:
 
 #%% Backtesting on test set
 # from scipy.ndimage.interpolation import shift
-logReturns = df[['Return', 'MinMaxScaled_Return']].copy().iloc[test_df_start_index+SEQ_LEN:,:]
+logReturns = df[['Return', 'MinMaxScaled_Return', 'MinMaxScaled_Close']].copy().iloc[test_df_start_index+SEQ_LEN:,:]
 
 predictionsFile = path.join(directory, 'predictions.parq')
 if path.exists(predictionsFile):

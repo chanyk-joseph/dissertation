@@ -11,7 +11,7 @@ from tensorflow.python.keras.layers import CuDNNLSTM
 LSTM = CuDNNLSTM
 
 class NN_Models:
-    def get_LSTM_BERT(self, SEQ_LEN, FUTURE_PERIOD_PREDICT):
+    def get_LSTM_BERT(self, inputShape, FUTURE_PERIOD_PREDICT):
         class LayerNormalization(Layer):
             def __init__(self, eps=1e-6, **kwargs):
                 self.eps = eps
@@ -114,8 +114,8 @@ class NN_Models:
                 # outputs = Add()([outputs, q]) # sl: fix
                 return self.layer_norm(outputs), attn
 
-        def build_model():
-            inp = Input(shape = (SEQ_LEN, 1))
+        def build_model(inputShape):
+            inp = Input(shape = inputShape)
             
             # LSTM before attention layers
             x = Bidirectional(LSTM(128, return_sequences=True))(inp)
@@ -140,5 +140,5 @@ class NN_Models:
             
             return model
 
-        multi_head = build_model()
+        multi_head = build_model(inputShape)
         return multi_head
