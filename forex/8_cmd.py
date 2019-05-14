@@ -29,7 +29,7 @@ pd.set_option("display.float_format", '{:,.3f}'.format)
 
 #%% Settings Hyper Parameters and file paths
 params = {
-    'currency': 'USDJPY',
+    'currency': sys.argv[1],
     'output_folder': 'outputs',
     'preprocessing': {
         'split_method': 'by_volume', # by_volume, by_time
@@ -80,12 +80,8 @@ params = {
                 'x_sequence_len': 120,
                 'y_future_sequence_len': 1,
                 'batch_size': 1024,
-                'epochs': 5,
-                'x_features_column_names': [
- 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low', 
- 'MinMaxScaled_Log_Return', 'MinMaxScaled_PIP_Return', 
- 'technical_MACD_histogram', 'technical_RSI', 'technical_ADX', 'technical_STOCH_slowk', 'technical_STOCH_slowd', 'technical_STOCHF_fastk', 'technical_DX',
- 'patterns_15min_CDLHIKKAKE', 'patterns_30min_CDLHIKKAKE', 'patterns_1H_CDLHIKKAKE', 'patterns_3H_CDLHIKKAKE', 'patterns_6H_CDLHIKKAKE'], #['MinMaxScaled_Log_Return', 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low'],
+                'epochs': 10,
+                'x_features_column_names': ['MinMaxScaled_Log_Return', 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low'],
                 'y_feature_column_name': 'MinMaxScaled_Log_Return'
             }
         }
@@ -666,6 +662,10 @@ if path.exists(random_forest_importances_matrix):
 
 
 
+#%%
+print('Final Features To Be Used In Subsequence Models')
+print(df.columns.values)
+df
 
 
 
@@ -676,15 +676,19 @@ if path.exists(random_forest_importances_matrix):
 
 
 
-#####################################################################
-#####################################################################
-#####################################################################
+
+
+
+
+######################################################################
+######################################################################
+######################################################################
 # Models Evaluation with Selected Features
-#####################################################################
-#####################################################################
-#####################################################################
+######################################################################
+######################################################################
+######################################################################
 
-#%% Models Evaluation with Selected Features
+#%%
 excludeColumns = ['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume', 'Open-Close', 'High-Low', 'Log_Return', 'PIP_Return', 'Short_Hold_Long', 'Simulated_PIP_Returns']
 featuresToBeUsed = [colName for colName in df.columns.values if not colName in excludeColumns]
 print('Number of columns: '+str(len(df.columns.values)))
@@ -953,13 +957,13 @@ for obj in params['methodologies']:
             train(X_train, y_train, X_valid, y_valid, weightFilePath)
         else:
             lstm_bert.load_weights(weightFilePath)
-            if False:
+            if isIncrementalTrain:
                 train(X_train, y_train, X_valid, y_valid, weightFilePath)
 
 
         #%% Backtesting on test set
         # from scipy.ndimage.interpolation import shift
-        logReturns = df[['Timestamp', 'Log_Return', p['y_feature_column_name']]].copy().iloc[test_df_start_index+SEQ_LEN:,:]
+        logReturns = df[['Log_Return', p['y_feature_column_name']]].copy().iloc[test_df_start_index+SEQ_LEN:,:]
 
         print('Start Predict')
         predicted = lstm_bert.predict(X_test)
@@ -994,8 +998,8 @@ for obj in params['methodologies']:
         strRet = logReturns['Strategy_Return'].cumsum()
 
         plt.figure(figsize=(10,5))
-        plt.plot(actRet, color='r', label='Actual Log Return Of '+params['currency'])
-        plt.plot(strRet, color='g', label='Strategy Accumulated Log Return')
+        plt.plot(actRet, color='r', label='Actual')
+        plt.plot(strRet, color='g', label='Strategy')
         plt.legend()
         plt.show()
 
