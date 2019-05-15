@@ -30,8 +30,9 @@ pd.set_option("display.float_format", '{:,.3f}'.format)
 #%% Settings Hyper Parameters and file paths
 params = {
     'currency': 'USDJPY',
-    'output_folder': 'outputs',
+    'output_folder': 'outputs_using_tick',
     'preprocessing': {
+        'is_tick': True,
         'split_method': 'by_volume', # by_volume, by_time
         'volume_bin': 500,
         'resolution': '1min'
@@ -73,6 +74,7 @@ params = {
     'class_labelling': {
         'forward_looking_bars': 60
     },
+    'evaluate_classification_models': False,
     'methodologies': [
         {
             'method': 'lstm-bert',
@@ -81,11 +83,7 @@ params = {
                 'y_future_sequence_len': 1,
                 'batch_size': 1024,
                 'epochs': 5,
-                'x_features_column_names': [
- 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low', 
- 'MinMaxScaled_Log_Return', 'MinMaxScaled_PIP_Return', 
- 'technical_MACD_histogram', 'technical_RSI', 'technical_ADX', 'technical_STOCH_slowk', 'technical_STOCH_slowd', 'technical_STOCHF_fastk', 'technical_DX',
- 'patterns_15min_CDLHIKKAKE', 'patterns_30min_CDLHIKKAKE', 'patterns_1H_CDLHIKKAKE', 'patterns_3H_CDLHIKKAKE', 'patterns_6H_CDLHIKKAKE'], #['MinMaxScaled_Log_Return', 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low'],
+                'x_features_column_names': [], #['MinMaxScaled_Log_Return', 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low']],
                 'y_feature_column_name': 'MinMaxScaled_Log_Return'
             }
         }
@@ -102,6 +100,7 @@ def hash(dictObj):
     return h
 
 raw_data_csv_path = path.join(dataDir, params['currency']+'_1MIN_(1-1-2008_31-12-2017).csv')
+raw_tick_data_csv_path = path.join(dataDir, params['currency']+'_2008-1-1_2017_12_29_ticks.csv')
 output_folder = path.join(dataDir, params['currency'], params['output_folder'])
 preprocessed_df_path = path.join(output_folder, 'preprocessed_'+hash(params['preprocessing'])+'.parq')
 
@@ -135,19 +134,6 @@ if not os.path.exists(output_folder):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 #%% Raw Data Preprocessing
 from sklearn.preprocessing import MinMaxScaler
 minMaxScaler = MinMaxScaler(feature_range=(0,1))
@@ -156,11 +142,21 @@ df = None
 if not path.exists(preprocessed_df_path):
     if params['preprocessing']['split_method'] == 'by_volume':
         # Resample by volume
-        df = pd.read_csv(raw_data_csv_path)
+
+        vol_col_name = 'Volume'
+        price_col_name = 'Close'
+        if params['preprocessing']['is_tick']:
+            df = pd.read_csv(raw_tick_data_csv_path)
+            df.columns = ['Timestamp', 'Bid', 'Ask', 'BidVolume', 'AskVolume']
+            df.drop(['AskVolume'], axis=1, inplace=True)
+            vol_col_name = 'BidVolume'
+            price_col_name = 'Bid'
+        else:
+            df = pd.read_csv(raw_data_csv_path)
         # df = df.iloc[0:100,:]
 
         cutIndexes = []
-        vols = df['Volume'].values
+        vols = df[vol_col_name].values
         cum = 0
         for i in tqdm(range(0, len(vols))):
             cum += vols[i]
@@ -179,9 +175,9 @@ if not path.exists(preprocessed_df_path):
         previousIndex = 0
         def addRecord(rows):
             timestamp = rows['Timestamp'].values[-1]
-            cumVolume = rows['Volume'].sum()
+            cumVolume = rows[vol_col_name].sum()
             
-            closes = rows['Close'].values
+            closes = rows[price_col_name].values
             o = closes[0]
             h = closes.max()
             l = closes.min()
@@ -692,138 +688,140 @@ print(df.columns.values)
 print('featuresToBeUsed: ')
 print(featuresToBeUsed)
 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.externals import joblib
-from sklearn.model_selection import train_test_split
 
-tmp = df.copy()
-tmp['Target_Prediction'] = tmp['Short_Hold_Long'].shift(-1)
-tmp.dropna(inplace=True)
+if params['evaluate_classification_models']:
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.externals import joblib
+    from sklearn.model_selection import train_test_split
 
-totalNumRecords = len(tmp.index)
-buyRecords = len(tmp[tmp['Target_Prediction'] == 1].index)
-sellRecords = len(tmp[tmp['Target_Prediction'] == -1].index)
-holdRecords = len(tmp[tmp['Target_Prediction'] == 0].index)
+    tmp = df.copy()
+    tmp['Target_Prediction'] = tmp['Short_Hold_Long'].shift(-1)
+    tmp.dropna(inplace=True)
 
-print('Total Number of Records: ' + str(totalNumRecords))
-print('Total Number of Long Records: ' + str(totalNumRecords) + ' (' +str(buyRecords/totalNumRecords * 100)+ '%)')
-print('Total Number of Short Records: ' + str(totalNumRecords) + ' (' +str(sellRecords/totalNumRecords * 100)+ '%)')
-print('Total Number of Hold Records: ' + str(totalNumRecords) + ' (' +str(holdRecords/totalNumRecords * 100)+ '%)')
+    totalNumRecords = len(tmp.index)
+    buyRecords = len(tmp[tmp['Target_Prediction'] == 1].index)
+    sellRecords = len(tmp[tmp['Target_Prediction'] == -1].index)
+    holdRecords = len(tmp[tmp['Target_Prediction'] == 0].index)
 
-train, test = train_test_split(tmp, test_size=0.2, shuffle=True)
-print('Number of records in training set: ' + str(len(train.index)))
-print('Number of records in test set: ' + str(len(test.index)))
+    print('Total Number of Records: ' + str(totalNumRecords))
+    print('Total Number of Long Records: ' + str(totalNumRecords) + ' (' +str(buyRecords/totalNumRecords * 100)+ '%)')
+    print('Total Number of Short Records: ' + str(totalNumRecords) + ' (' +str(sellRecords/totalNumRecords * 100)+ '%)')
+    print('Total Number of Hold Records: ' + str(totalNumRecords) + ' (' +str(holdRecords/totalNumRecords * 100)+ '%)')
 
-X_train = train[featuresToBeUsed].values
-Y_train = train['Target_Prediction'].values
+    train, test = train_test_split(tmp, test_size=0.2, shuffle=True)
+    print('Number of records in training set: ' + str(len(train.index)))
+    print('Number of records in test set: ' + str(len(test.index)))
 
-X_test = test[featuresToBeUsed].values
-Y_test = test['Target_Prediction'].values
+    X_train = train[featuresToBeUsed].values
+    Y_train = train['Target_Prediction'].values
 
-
-from sklearn import linear_model
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import SGDClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC, LinearSVC
-from sklearn.naive_bayes import GaussianNB
-from sklearn import metrics
+    X_test = test[featuresToBeUsed].values
+    Y_test = test['Target_Prediction'].values
 
 
-#%% Random Forest
-random_forest = RandomForestClassifier(n_estimators=100, n_jobs=16)
-print('Start training random forest')
-random_forest.fit(X_train, Y_train)
-print('Start evaluating the test set')
-Y_prediction = random_forest.predict(X_test)
-print('Scoring the accuracy')
-random_forest.score(X_train, Y_train)
-acc_random_forest = round(random_forest.score(X_train, Y_train) * 100, 2)
-print(round(acc_random_forest,2,), "%")
-joblib.dump(random_forest, random_forest_trained_model_path)
+    from sklearn import linear_model
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.linear_model import Perceptron
+    from sklearn.linear_model import SGDClassifier
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.svm import SVC, LinearSVC
+    from sklearn.naive_bayes import GaussianNB
+    from sklearn import metrics
 
 
-from sklearn.metrics import accuracy_score  #for accuracy_score
-from sklearn.model_selection import KFold #for K-fold cross validation
-from sklearn.model_selection import cross_val_score #score evaluation
-from sklearn.model_selection import cross_val_predict #prediction
-from sklearn.metrics import confusion_matrix #for confusion matrix
-
-print('--------------Cross Check The Accuracy of the model with KFold----------------------------')
-# print('The accuracy of the Random Forest Classifier is', round(accuracy_score(Y_prediction,Y_test)*100,2))
-kfold = KFold(n_splits=10, random_state=22) # k=10, split the data into 10 equal parts
-result_rm=cross_val_score(random_forest, train[featuresToBeUsed], train['Target_Prediction'], cv=10,scoring='accuracy')
-print('The cross validated score for Random Forest Classifier is:',round(result_rm.mean()*100,2))
-
-
+    #%% Random Forest
+    random_forest = RandomForestClassifier(n_estimators=100, n_jobs=16)
+    print('Start training random forest')
+    random_forest.fit(X_train, Y_train)
+    print('Start evaluating the test set')
+    Y_prediction = random_forest.predict(X_test)
+    print('Scoring the accuracy')
+    random_forest.score(X_train, Y_train)
+    acc_random_forest = round(random_forest.score(X_train, Y_train) * 100, 2)
+    print(round(acc_random_forest,2,), "%")
+    joblib.dump(random_forest, random_forest_trained_model_path)
 
 
-#%% Support Vector Machines (SVM)
-linear_svc = LinearSVC()
-linear_svc.fit(X_train, Y_train)
-Y_pred = linear_svc.predict(X_test)
-acc_linear_svc = round(linear_svc.score(X_train, Y_train) * 100, 2)
-print(round(acc_linear_svc,2,), "%")
-print(metrics.classification_report(Y_test , Y_pred))
+    from sklearn.metrics import accuracy_score  #for accuracy_score
+    from sklearn.model_selection import KFold #for K-fold cross validation
+    from sklearn.model_selection import cross_val_score #score evaluation
+    from sklearn.model_selection import cross_val_predict #prediction
+    from sklearn.metrics import confusion_matrix #for confusion matrix
 
-
-
-#%% Stochastic Gradient Descent (SGD)
-sgd = linear_model.SGDClassifier(max_iter=5, tol=None)
-sgd.fit(X_train, Y_train)
-Y_pred = sgd.predict(X_test)
-sgd.score(X_train, Y_train)
-acc_sgd = round(sgd.score(X_train, Y_train) * 100, 2)
-print(round(acc_sgd,2,), "%")
-print(metrics.classification_report(Y_test , Y_pred))
+    print('--------------Cross Check The Accuracy of the model with KFold----------------------------')
+    # print('The accuracy of the Random Forest Classifier is', round(accuracy_score(Y_prediction,Y_test)*100,2))
+    kfold = KFold(n_splits=10, random_state=22) # k=10, split the data into 10 equal parts
+    result_rm=cross_val_score(random_forest, train[featuresToBeUsed], train['Target_Prediction'], cv=10,scoring='accuracy')
+    print('The cross validated score for Random Forest Classifier is:',round(result_rm.mean()*100,2))
 
 
 
 
-
-#%% Logistic Regression
-logreg = LogisticRegression()
-logreg.fit(X_train, Y_train)
-Y_pred = logreg.predict(X_test)
-acc_log = round(logreg.score(X_train, Y_train) * 100, 2)
-print(round(acc_log,2,), "%")
-print(metrics.classification_report(Y_test , Y_pred))
-
+    #%% Support Vector Machines (SVM)
+    linear_svc = LinearSVC()
+    linear_svc.fit(X_train, Y_train)
+    Y_pred = linear_svc.predict(X_test)
+    acc_linear_svc = round(linear_svc.score(X_train, Y_train) * 100, 2)
+    print(round(acc_linear_svc,2,), "%")
+    print(metrics.classification_report(Y_test , Y_pred))
 
 
 
-#%% Gaussian Naïve Bayes
-gaussian = GaussianNB()
-gaussian.fit(X_train, Y_train)
-Y_pred = gaussian.predict(X_test)
-acc_gaussian = round(gaussian.score(X_train, Y_train) * 100, 2)
-print(round(acc_gaussian,2,), "%")
-print(metrics.classification_report(Y_test , Y_pred))
-
-
-
-#%% Perceptron
-perceptron = Perceptron(max_iter=5)
-perceptron.fit(X_train, Y_train)
-Y_pred = perceptron.predict(X_test)
-acc_perceptron = round(perceptron.score(X_train, Y_train) * 100, 2)
-print(round(acc_perceptron,2,), "%")
-print(metrics.classification_report(Y_test , Y_pred))
+    #%% Stochastic Gradient Descent (SGD)
+    sgd = linear_model.SGDClassifier(max_iter=5, tol=None)
+    sgd.fit(X_train, Y_train)
+    Y_pred = sgd.predict(X_test)
+    sgd.score(X_train, Y_train)
+    acc_sgd = round(sgd.score(X_train, Y_train) * 100, 2)
+    print(round(acc_sgd,2,), "%")
+    print(metrics.classification_report(Y_test , Y_pred))
 
 
 
 
 
-#%% K-nearest Neighbours (KNN)
-knn = KNeighborsClassifier(n_neighbors = 3)
-knn.fit(X_train, Y_train)
-Y_pred = knn.predict(X_test)
-acc_knn = round(knn.score(X_train, Y_train) * 100, 2)
-print(round(acc_knn,2,), "%")
-print(metrics.classification_report(Y_test , Y_pred))
+    #%% Logistic Regression
+    logreg = LogisticRegression()
+    logreg.fit(X_train, Y_train)
+    Y_pred = logreg.predict(X_test)
+    acc_log = round(logreg.score(X_train, Y_train) * 100, 2)
+    print(round(acc_log,2,), "%")
+    print(metrics.classification_report(Y_test , Y_pred))
+
+
+
+
+    #%% Gaussian Naïve Bayes
+    gaussian = GaussianNB()
+    gaussian.fit(X_train, Y_train)
+    Y_pred = gaussian.predict(X_test)
+    acc_gaussian = round(gaussian.score(X_train, Y_train) * 100, 2)
+    print(round(acc_gaussian,2,), "%")
+    print(metrics.classification_report(Y_test , Y_pred))
+
+
+
+    #%% Perceptron
+    perceptron = Perceptron(max_iter=5)
+    perceptron.fit(X_train, Y_train)
+    Y_pred = perceptron.predict(X_test)
+    acc_perceptron = round(perceptron.score(X_train, Y_train) * 100, 2)
+    print(round(acc_perceptron,2,), "%")
+    print(metrics.classification_report(Y_test , Y_pred))
+
+
+
+
+
+    #%% K-nearest Neighbours (KNN)
+    knn = KNeighborsClassifier(n_neighbors = 3)
+    knn.fit(X_train, Y_train)
+    Y_pred = knn.predict(X_test)
+    acc_knn = round(knn.score(X_train, Y_train) * 100, 2)
+    print(round(acc_knn,2,), "%")
+    print(metrics.classification_report(Y_test , Y_pred))
 
 
 
@@ -853,7 +851,9 @@ for obj in params['methodologies']:
         weightFilePath = path.join(output_folder, 'lstm-bert_'+h+'.h5')
 
         #%% Split dataset into train, test, validate
-        FEATURES_COLS = p['x_features_column_names']
+        FEATURES_COLS = featuresToBeUsed
+        if len(p['x_features_column_names']) > 0:
+            FEATURES_COLS = p['x_features_column_names']
         TARGET_COLS = [p['y_feature_column_name']]
         SEQ_LEN = p['x_sequence_len']
         FUTURE_PERIOD_PREDICT = p['y_future_sequence_len']
