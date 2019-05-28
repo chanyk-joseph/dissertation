@@ -9,6 +9,7 @@ from fastparquet import ParquetFile
 import os
 import sys
 import os.path as path
+import random
 
 from tqdm import tqdm
 import numpy as np
@@ -19,6 +20,7 @@ import pickle
 import talib
 
 from forex.OHLC import OHLC
+from forex.utils import *
 
 dataDir = ''
 if platform.system() == 'Windows':
@@ -31,19 +33,26 @@ else:
 pd.set_option("display.max_rows", 10)
 pd.set_option("display.float_format", '{:,.3f}'.format)
 
+rollingWinSize = int(sys.argv[1])
+batchSize = int(sys.argv[2])
+epochNum = int(sys.argv[3])
+weightFileName = sys.argv[4]
+gpuId = sys.argv[5]
+nnModleId = sys.argv[6]
+
 
 #%% Settings Hyper Parameters and file paths
 params = {
     'currency': 'USDJPY',
-    'output_folder': 'outputs_using_ticks_Close_As_Log_Return',
+    'output_folder': 'outputs_using_ticks_1000_from_2005',
     'preprocessing': {
         'is_tick': True,
         'split_method': 'by_volume', # by_volume, by_time
-        'volume_bin': 500,
+        'volume_bin': 1000,
         'resolution': '1min'
     },
     'basic_features_generation': {
-        'rolling_window_for_min_max_scaler': 200,
+        'scaler_rolling_window': rollingWinSize,
     },
     'techical_indicators': {
         'MACD': {
@@ -84,10 +93,10 @@ params = {
         {
             'method': 'lstm-bert',
             'params': {
-                'x_sequence_len': 120,
+                'x_sequence_len': rollingWinSize,
                 'y_future_sequence_len': 1,
-                'batch_size': 1024,
-                'epochs': 5,
+                'batch_size': batchSize,
+                'epochs': epochNum,
                 'x_features_column_names': [], #['MinMaxScaled_Log_Return', 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low']],
                 'y_feature_column_name': 'MinMaxScaled_Log_Return'
             }
@@ -105,7 +114,7 @@ def hash(dictObj):
     return h
 
 raw_data_csv_path = path.join(dataDir, params['currency']+'_1MIN_(1-1-2008_31-12-2017).csv')
-raw_tick_data_csv_path = path.join(dataDir, params['currency']+'_2008-1-1_2017_12_29_ticks.csv')
+raw_tick_data_csv_path = path.join(dataDir, params['currency']+'_2005-1-2_2019-5-17_ticks.csv')
 output_folder = path.join(dataDir, params['currency'], params['output_folder'])
 preprocessed_df_path = path.join(output_folder, 'preprocessed_'+hash(params['preprocessing'])+'.parq')
 
@@ -152,8 +161,9 @@ def read_df(input_file):
 
 
 #%% Raw Data Preprocessing
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 minMaxScaler = MinMaxScaler(feature_range=(0,1))
+standardizeScaler = StandardScaler()
 
 df = None
 if not path.exists(preprocessed_df_path):
@@ -284,13 +294,19 @@ df
 
 #%% Generate Basic Features
 if not path.exists(basic_features_df_path):
+    df['Timestamp'] = pd.to_datetime(df['Timestamp']).dt.tz_localize(None)
+    df['Time_Diff_Freq'] = 1 / (df['Timestamp'] - df['Timestamp'].shift(1)).dt.seconds
     df['Open-Close'] = df['Open'] - df['Close']
     df['High-Low'] = df['High'] - df['Low']
-    df['Log_Return'] = np.log(df['Close'] / df['Close'].shift(1))
+    df['Log_Return'] = np.log(df['Close'] / df['Open']) #np.log(df['Open'] / df['Open'].shift(1))
     df['PIP_Return'] = df['Close'].diff() * 10000
 
-    rollingWindow = params['basic_features_generation']['rolling_window_for_min_max_scaler']
+    rollingWindow = params['basic_features_generation']['scaler_rolling_window']
+    
     minMaxScale = lambda x: minMaxScaler.fit_transform(x.reshape(-1,1)).reshape(1, len(x))[0][-1]
+    standardScale = lambda x: standardizeScaler.fit_transform(x.reshape(-1,1)).reshape(1, len(x))[0][-1]
+
+    df['MinMaxScaled_Time_Diff_Freq'] = df['Time_Diff_Freq'].rolling(rollingWindow).apply(minMaxScale)
     df['MinMaxScaled_Open'] = df['Open'].rolling(rollingWindow).apply(minMaxScale)
     df['MinMaxScaled_High'] = df['High'].rolling(rollingWindow).apply(minMaxScale)
     df['MinMaxScaled_Low'] = df['Low'].rolling(rollingWindow).apply(minMaxScale)
@@ -314,11 +330,8 @@ else:
 # df[['Timestamp', 'Open', 'High', 'Low', 'Close', 'Open-Close', 'High-Low']]
 
 
-
-
-
-
-
+#%%
+df
 
 
 
@@ -473,7 +486,7 @@ print('Number of Should-Hold: ' + str(len(df[df['Short_Hold_Long']==0].index)))
 #%% Patterns Features Generation
 if not path.exists(patterns_features_df_path):
     tmp_df = df.copy()
-    tmp_df['Timestamp'] = pd.to_datetime(tmp_df['Timestamp']).dt.tz_localize(None)
+    # tmp_df['Timestamp'] = pd.to_datetime(tmp_df['Timestamp']).dt.tz_localize(None)
     tmp_df.index = pd.DatetimeIndex(tmp_df['Timestamp'])
     def detect_pattern_using_talib(prefix, o, h, l, c):
         results = {}
@@ -622,10 +635,11 @@ else:
 
 
 #%% Use Random Forest to find out the features importances
+print('Use Random Forest to find out the features importances')
 print('Number of columns: '+str(len(df.columns.values)))
 print(df.columns.values)
 featuresToBeUsed = df.columns.values[[colName.startswith('patterns_') or colName.startswith('technical_') for colName in df.columns.values]]
-featuresToBeUsed = np.concatenate((featuresToBeUsed, np.array(['MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low', 'MinMaxScaled_Log_Return', 'MinMaxScaled_PIP_Return'])), axis=None)
+# featuresToBeUsed = np.concatenate((featuresToBeUsed, np.array(['MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low', 'MinMaxScaled_Log_Return', 'MinMaxScaled_PIP_Return'])), axis=None)
 print(featuresToBeUsed)
 if not path.exists(random_forest_importances_matrix):
     from sklearn.ensemble import RandomForestClassifier
@@ -642,9 +656,9 @@ if not path.exists(random_forest_importances_matrix):
     holdRecords = len(tmp[tmp['Target_Prediction'] == 0].index)
 
     print('Total Number of Records: ' + str(totalNumRecords))
-    print('Total Number of Long Records: ' + str(totalNumRecords) + ' (' +str(buyRecords/totalNumRecords * 100)+ '%)')
-    print('Total Number of Short Records: ' + str(totalNumRecords) + ' (' +str(sellRecords/totalNumRecords * 100)+ '%)')
-    print('Total Number of Hold Records: ' + str(totalNumRecords) + ' (' +str(holdRecords/totalNumRecords * 100)+ '%)')
+    print('Total Number of Long Records: ' + str(buyRecords) + ' (' +str(buyRecords/totalNumRecords * 100)+ '%)')
+    print('Total Number of Short Records: ' + str(sellRecords) + ' (' +str(sellRecords/totalNumRecords * 100)+ '%)')
+    print('Total Number of Hold Records: ' + str(holdRecords) + ' (' +str(holdRecords/totalNumRecords * 100)+ '%)')
 
     train, test = train_test_split(tmp, test_size=0.2, shuffle=True)
     print('Number of records in training set: ' + str(len(train.index)))
@@ -693,9 +707,11 @@ if not path.exists(random_forest_importances_matrix):
     import matplotlib.pyplot as plt
     import seaborn as sns
     y_pred = cross_val_predict(random_forest, train[featuresToBeUsed], train['Target_Prediction'], cv=10)
-    sns.heatmap(confusion_matrix(train['Target_Prediction'], y_pred),annot=True,fmt='3.0f',cmap="summer")
+    conf_matrix = confusion_matrix(train['Target_Prediction'], y_pred)
+    sns.heatmap(conf_matrix,annot=True,fmt='3.0f',cmap="summer")
     plt.title('Confusion_matrix', y=1.05, size=15)
     plt.savefig(random_forest_confusion_matrix, bbox_inches='tight')
+
 
 #%% Use only importance features according to random forest
 if path.exists(random_forest_importances_matrix):
@@ -730,7 +746,8 @@ if path.exists(random_forest_importances_matrix):
 #####################################################################
 
 #%% Models Evaluation with Selected Features
-excludeColumns = ['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume', 'Open-Close', 'High-Low', 'Log_Return', 'PIP_Return', 'Short_Hold_Long', 'Simulated_PIP_Returns']
+print('Models Evaluation with Selected Features')
+excludeColumns = ['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume', 'Open-Close', 'High-Low', 'Time_Diff_Freq', 'Log_Return', 'PIP_Return', 'Short_Hold_Long', 'Simulated_PIP_Returns']
 featuresToBeUsed = [colName for colName in df.columns.values if not colName in excludeColumns]
 print('Number of columns: '+str(len(df.columns.values)))
 print(df.columns.values)
@@ -892,12 +909,50 @@ if params['evaluate_classification_models']:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%%
+def genLongUsingActualLogReturn(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+
+
+# featuresToBeUsed = ['MinMaxScaled_Time_Diff_Freq', 'MinMaxScaled_Open', 'MinMaxScaled_High', 'MinMaxScaled_Low', 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low', 'MinMaxScaled_Log_Return', 'MinMaxScaled_PIP_Return', 'technical_MACD_histogram', 'technical_RSI', 'technical_ADX', 'technical_STOCH_slowk', 'technical_STOCH_slowd', 'technical_STOCHF_fastk', 'technical_DX']
+# featuresToBeUsed = ['Log_Return', 'MinMaxScaled_Log_Return', 'MinMaxScaled_Time_Diff_Freq', 'MinMaxScaled_Close', 'MinMaxScaled_Open-Close', 'MinMaxScaled_High-Low', 'technical_MACD_histogram', 'technical_RSI', 'technical_ADX', 'technical_STOCH_slowk', 'technical_STOCH_slowd', 'technical_STOCHF_fastk', 'technical_DX']
+
 #%%
 for obj in params['methodologies']:
     h = hash(obj)
     if obj['method'] == 'lstm-bert':
         p = obj['params']
-        weightFilePath = path.join(output_folder, 'lstm-bert_'+h+'.h5')
+        weightFilePath = path.join(output_folder, weightFileName)
 
         #%% Split dataset into train, test, validate
         FEATURES_COLS = featuresToBeUsed
@@ -912,37 +967,58 @@ for obj in params['methodologies']:
         last_20pct = sorted(df.index.values)[-int(0.2*len(times))]  # get the last 20% of the times
         test_df_start_index = last_10pct
 
-        test_df = df[(df.index >= last_10pct)]
-        validation_df = df[(df.index >= last_20pct) & (df.index < last_10pct)]
-        train_df = df[(df.index < last_20pct)]  # now the train_df is all the data up to the last 20%
+        # test_df = df[(df.index >= last_10pct)]
+        # validation_df = df[(df.index >= last_20pct) & (df.index < last_10pct)]
+        # train_df = df[(df.index < last_20pct)]  # now the train_df is all the data up to the last 20%
 
-        train_data = train_df[FEATURES_COLS].values
-        y_train_data = train_df[TARGET_COLS].values
+        train_df = df[(df['Timestamp'] >= parseISODateTime('2005-01-01T00:00:00')) & (df['Timestamp'] < parseISODateTime('2017-07-01T00:00:00'))]
+        validation_df = df[(df['Timestamp'] >= parseISODateTime('2017-07-01T00:00:00')) & (df['Timestamp'] < parseISODateTime('2018-07-01T00:00:00'))]
+        test_df = df[df['Timestamp'] >= parseISODateTime('2018-07-01T00:00:00')]
 
-        valid_data = validation_df[FEATURES_COLS].values
-        y_valid_data = validation_df[TARGET_COLS].values
+        def generate_batch_data_random(df_ref, batch_size):
+            x = df_ref[FEATURES_COLS].values
+            y = df_ref[TARGET_COLS].values
+
+            df_len = len(df_ref.index)
+            loopcount = (df_len-SEQ_LEN) // batch_size
+            while (True):
+                batchIndex = random.randint(0, loopcount-1)
+                xStartIndex = SEQ_LEN + batchIndex * batch_size
+
+                X_train = []
+                y_train = []
+                for i in range(xStartIndex, xStartIndex+batch_size):
+                    X_train.append(x[i-SEQ_LEN:i])
+                    y_train.append(y[i:i+FUTURE_PERIOD_PREDICT][0])
+                yield np.array(X_train), np.array(y_train)
+
+        # train_data = train_df[FEATURES_COLS].values
+        # y_train_data = train_df[TARGET_COLS].values
+
+        # valid_data = validation_df[FEATURES_COLS].values
+        # y_valid_data = validation_df[TARGET_COLS].values
 
         test_data = test_df[FEATURES_COLS].values
         y_test_data = test_df[TARGET_COLS].values
 
-        all_data = df[FEATURES_COLS].values
-        y_all_data = df[TARGET_COLS].values
+        # all_data = df[FEATURES_COLS].values
+        # y_all_data = df[TARGET_COLS].values
 
-        X_train = []
-        y_train = []
-        for i in range(SEQ_LEN, len(train_data)-(FUTURE_PERIOD_PREDICT-1)):
-            X_train.append(train_data[i-SEQ_LEN:i])
-            y_train.append(y_train_data[i:i+FUTURE_PERIOD_PREDICT][0])
-        X_train, y_train = np.array(X_train), np.array(y_train)
-        # X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+        # X_train = []
+        # y_train = []
+        # for i in range(SEQ_LEN, len(train_data)-(FUTURE_PERIOD_PREDICT-1)):
+        #     X_train.append(train_data[i-SEQ_LEN:i])
+        #     y_train.append(y_train_data[i:i+FUTURE_PERIOD_PREDICT][0])
+        # X_train, y_train = np.array(X_train), np.array(y_train)
+        # # X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
 
-        X_valid = []
-        y_valid = []
-        for i in range(SEQ_LEN, len(valid_data)-(FUTURE_PERIOD_PREDICT-1)):
-            X_valid.append(valid_data[i-SEQ_LEN:i])
-            y_valid.append(y_valid_data[i:i+FUTURE_PERIOD_PREDICT][0])
-        X_valid, y_valid = np.array(X_valid), np.array(y_valid)
-        # X_valid = np.reshape(X_valid, (X_valid.shape[0], X_valid.shape[1], 1))
+        # X_valid = []
+        # y_valid = []
+        # for i in range(SEQ_LEN, len(valid_data)-(FUTURE_PERIOD_PREDICT-1)):
+        #     X_valid.append(valid_data[i-SEQ_LEN:i])
+        #     y_valid.append(y_valid_data[i:i+FUTURE_PERIOD_PREDICT][0])
+        # X_valid, y_valid = np.array(X_valid), np.array(y_valid)
+        # # X_valid = np.reshape(X_valid, (X_valid.shape[0], X_valid.shape[1], 1))
 
         X_test = []
         y_test = []
@@ -952,63 +1028,101 @@ for obj in params['methodologies']:
         X_test, y_test = np.array(X_test), np.array(y_test)
         # X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
 
-        X_all = []
-        y_all = []
-        for i in range(SEQ_LEN, len(all_data)-(FUTURE_PERIOD_PREDICT-1)):
-            X_all.append(all_data[i-SEQ_LEN:i])
-            y_all.append(y_all_data[i:i+FUTURE_PERIOD_PREDICT][0])
-        X_all, y_all = np.array(X_all), np.array(y_all)
-        # X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+        # X_all = []
+        # y_all = []
+        # for i in range(SEQ_LEN, len(all_data)-(FUTURE_PERIOD_PREDICT-1)):
+        #     X_all.append(all_data[i-SEQ_LEN:i])
+        #     y_all.append(y_all_data[i:i+FUTURE_PERIOD_PREDICT][0])
+        # X_all, y_all = np.array(X_all), np.array(y_all)
+        # # X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
 
 
         #%%
-        print(y_train.shape)
-        print(y_valid.shape)
-        print(y_test.shape)
-        print(y_all.shape)
-        print(X_all.shape)
+        # print(y_train.shape)
+        # print(y_valid.shape)
+        # print(y_test.shape)
+        # print(y_all.shape)
+        # print(X_all.shape)
 
 
         #%% Construct LSTM-BERT model
         import tensorflow as tf
         from forex.NN_Models import NN_Models
+        from forex.NN_Models2 import NN_Models2
         from sklearn.utils import shuffle
         from tensorflow.python.keras.callbacks import ModelCheckpoint
 
-        # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+        os.environ['CUDA_VISIBLE_DEVICES'] = gpuId
         config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         session = tf.compat.v1.InteractiveSession(config=config)
 
 
-        nn_models = NN_Models()
-        lstm_bert = nn_models.get_LSTM_BERT((X_all.shape[1], X_all.shape[2]), FUTURE_PERIOD_PREDICT)
+        nn_models = None
+        lstm_bert = None
+        # cp_callback = tf.keras.callbacks.ModelCheckpoint(checkpoint_path, verbose=1, save_weights_only=True, period=1, save_best_only=True)
+        if nnModleId == '2':
+            nn_models = NN_Models2()
+            lstm_bert = nn_models.get_LSTM_BERT((SEQ_LEN, len(FEATURES_COLS)), FUTURE_PERIOD_PREDICT)
+        else:
+            nn_models = NN_Models()
+            lstm_bert = nn_models.get_LSTM_BERT((SEQ_LEN, len(FEATURES_COLS)), FUTURE_PERIOD_PREDICT)
+
+        class SaveWeightCallback(tf.keras.callbacks.Callback):
+            def on_train_batch_begin(self, batch, logs=None):
+                return
+            def on_train_batch_end(self, batch, logs=None):
+                return
+            def on_test_batch_begin(self, batch, logs=None):
+                return
+            def on_test_batch_end(self, batch, logs=None):
+                lstm_bert.save_weights(weightFilePath)
+                return
 
         def train(X_train, y_train, X_valid, y_valid, weightFilePath):
             X_train, y_train = shuffle(X_train, y_train)
 
-            # filepath= path.join(directory, "weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5")
-            # checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+            filepath= path.join(directory, "weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5")
+            checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 
             lstm_bert.fit(X_train, y_train,
                                 batch_size=p['batch_size'],
                                 epochs=p['epochs'],
                                 validation_data=(X_valid, y_valid), 
-                                # callbacks = [checkpoint]
+                                # callbacks = [cp_callback],
+                                callbacks = [SaveWeightCallback()],
                         )
+
             lstm_bert.save_weights(weightFilePath)
 
+        def train_using_dfs(train_df, validation_df, weightFilePath):
+            lstm_bert.fit_generator(generate_batch_data_random(train_df, p['batch_size']),                                                      
+                                    steps_per_epoch=((len(train_df.index)-SEQ_LEN)//p['batch_size']),
+                                    epochs=p['epochs'], 
+                                    validation_data=generate_batch_data_random(validation_df, p['batch_size']),
+                                    validation_steps=((len(validation_df.index)-SEQ_LEN)//p['batch_size']), 
+                                    verbose=1,
+                                    callbacks=[SaveWeightCallback()],
+                                    use_multiprocessing=True,
+                                    workers=10,
+                                    )
+            lstm_bert.save_weights(weightFilePath)
+
+        print(len(train_df.index))
+        print((len(train_df.index)-SEQ_LEN)//p['batch_size'])
         if not path.exists(weightFilePath):
-            train(X_train, y_train, X_valid, y_valid, weightFilePath)
+            # train(X_train, y_train, X_valid, y_valid, weightFilePath)
+            train_using_dfs(train_df, validation_df, weightFilePath)
         else:
             lstm_bert.load_weights(weightFilePath)
-            if False:
-                train(X_train, y_train, X_valid, y_valid, weightFilePath)
+            if True:
+                # train(X_train, y_train, X_valid, y_valid, weightFilePath)
+                train_using_dfs(train_df, validation_df, weightFilePath)
 
 
         #%% Backtesting on test set
         # from scipy.ndimage.interpolation import shift
-        logReturns = df[['Timestamp', 'Log_Return', p['y_feature_column_name']]].copy().iloc[test_df_start_index+SEQ_LEN:,:]
+        logReturns = test_df[['Timestamp', 'Log_Return', 'PIP_Return', p['y_feature_column_name']]].copy().iloc[SEQ_LEN:,:]
 
         print('Start Predict')
         predicted = lstm_bert.predict(X_test)
@@ -1017,6 +1131,14 @@ for obj in params['methodologies']:
         # logReturns.to_parquet(predictionsFile)
 
         print('Start Backtest')
+
+        # minMaxScaler = MinMaxScaler(feature_range=(0,1))
+        # def minMaxScaleReverse(x): 
+        #     minMaxScaler.fit(x.reshape(-1,1))
+        # df['Predicted_Log_Return'] = logReturns['Log_Return'].rolling(200).apply(minMaxScaleReverse)
+
+
+
         def genLong(x):
             if x > 0.5:
                 return 1
@@ -1040,7 +1162,7 @@ for obj in params['methodologies']:
         logReturns['Strategy_Return'] = logReturns['Log_Return'] * logReturns['Signal']
 
         actRet = logReturns['Log_Return'].cumsum() * 100
-        strRet = logReturns['Strategy_Return'].cumsum()
+        strRet = logReturns['Strategy_Return'].cumsum() * 100
 
         plt.figure(figsize=(10,5))
         plt.plot(actRet, color='r', label='Actual Log Return Of '+params['currency'])
@@ -1053,14 +1175,16 @@ for obj in params['methodologies']:
         correctLong = len(logReturns[logReturns['Signal'] == 1][logReturns['Log_Return'] > 0].index)
         wrongLong = len(logReturns[logReturns['Signal'] == 1][logReturns['Log_Return'] < 0].index)
         print('Total Long Signal: '+str(longCount))
-        print('Correct: '+str(correctLong) + '('+str(correctLong/longCount*100)+'%)')
-        print('Wrong: '+str(wrongLong) + '('+str(wrongLong/longCount*100)+'%)')
+        if longCount > 0:
+            print('Correct: '+str(correctLong) + '('+str(correctLong/longCount*100)+'%)')
+            print('Wrong: '+str(wrongLong) + '('+str(wrongLong/longCount*100)+'%)')
 
         correctShort = len(logReturns[logReturns['Signal'] == -1][logReturns['Log_Return'] < 0].index)
         wrongShort = len(logReturns[logReturns['Signal'] == -1][logReturns['Log_Return'] > 0].index)
         print('Total Short Signal: '+str(shortCount))
-        print('Correct: '+str(correctShort) + '('+str(correctShort/shortCount*100)+'%)')
-        print('Wrong: '+str(wrongShort) + '('+str(wrongShort/shortCount*100)+'%)')
+        if shortCount > 0:
+            print('Correct: '+str(correctShort) + '('+str(correctShort/shortCount*100)+'%)')
+            print('Wrong: '+str(wrongShort) + '('+str(wrongShort/shortCount*100)+'%)')
 
 
         #%%
@@ -1069,7 +1193,6 @@ for obj in params['methodologies']:
 
         #%%
         from sklearn import metrics
-
         logReturns['Actual_Signal'] = logReturns[p['y_feature_column_name']].apply(genLong)
         print(metrics.confusion_matrix(logReturns['Actual_Signal'] , logReturns['Signal']))
         print(metrics.classification_report(logReturns['Actual_Signal'] , logReturns['Signal']))

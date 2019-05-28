@@ -10,7 +10,7 @@ from tensorflow.python.keras.layers import Layer
 from tensorflow.python.keras.layers import CuDNNLSTM
 LSTM = CuDNNLSTM
 
-class NN_Models:
+class NN_Models2:
     def get_LSTM_BERT(self, inputShape, FUTURE_PERIOD_PREDICT):
         class LayerNormalization(Layer):
             def __init__(self, eps=1e-6, **kwargs):
@@ -133,7 +133,7 @@ class NN_Models:
             inp = Input(shape = inputShape)
             
             # LSTM before attention layers
-            x = Bidirectional(LSTM(128, return_sequences=True))(inp)
+            x = Bidirectional(LSTM(200, return_sequences=True))(inp)
             x = Bidirectional(LSTM(64, return_sequences=True))(x)
             
             x, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1, mode=1)(x, x, x)
@@ -141,12 +141,7 @@ class NN_Models:
             avg_pool = GlobalAveragePooling1D()(x)
             max_pool = GlobalMaxPooling1D()(x)
             conc = concatenate([avg_pool, max_pool])
-            # conc = Dense(64, activation="relu")(conc)
-            # x = Dense(FUTURE_PERIOD_PREDICT, activation="sigmoid")(conc)
-            
             conc = max_out(conc, 60)
-            # conc = max_out(conc, )
-            # conc = Dense(32, activation="sigmoid")(conc)
             x = Dense(FUTURE_PERIOD_PREDICT, activation="sigmoid")(conc)
 
             model = Model(inputs = inp, outputs = x)
