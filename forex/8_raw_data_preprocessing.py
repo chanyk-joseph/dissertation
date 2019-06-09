@@ -16,6 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
+from scipy import stats
 
 import talib
 
@@ -33,17 +34,17 @@ else:
 pd.set_option("display.max_rows", 10)
 pd.set_option("display.float_format", '{:,.3f}'.format)
 
-rollingWinSize = int(sys.argv[1])
-batchSize = int(sys.argv[2])
-epochNum = int(sys.argv[3])
-weightFileName = sys.argv[4]
-gpuId = sys.argv[5]
-nnModleId = sys.argv[6]
+rollingWinSize = 600
+batchSize = 32
+epochNum = 1
+weightFileName = 'raw_data_preprocessing_model.h5'
+gpuId = 0
+nnModleId = 2
 
 
 #%% Settings Hyper Parameters and file paths
 params = {
-    'currency': 'AUDUSD',
+    'currency': 'USDJPY',
     'output_folder': 'outputs_using_ticks_1000_from_2005',
     'preprocessing': {
         'is_tick': True,
@@ -114,7 +115,13 @@ def hash(dictObj):
     return h
 
 raw_data_csv_path = path.join(dataDir, params['currency']+'_1MIN_(1-1-2008_31-12-2017).csv')
-raw_tick_data_csv_path = path.join(dataDir, params['currency']+'_2005-1-2_2019-5-17_ticks.csv')
+raw_tick_data_csv_path = path.join(dataDir, params['currency']+'_2005-1-1_2019-5-18_ticks_new.csv')
+
+tmp_preprocess_tick_df_path1 = path.join(dataDir, params['currency']+'_ticks_preprocess_tmp_1.parq')
+tmp_preprocess_tick_df_path2 = path.join(dataDir, params['currency']+'_ticks_preprocess_tmp_2.parq')
+tmp_preprocess_tick_df_path3 = path.join(dataDir, params['currency']+'_ticks_preprocess_tmp_3.parq')
+tmp_preprocess_tick_df_path4 = path.join(dataDir, params['currency']+'_ticks_preprocess_tmp_4.parq')
+
 output_folder = path.join(dataDir, params['currency'], params['output_folder'])
 preprocessed_df_path = path.join(output_folder, 'preprocessed_'+hash(params['preprocessing'])+'.parq')
 
@@ -140,7 +147,7 @@ if not os.path.exists(output_folder):
 def save_df(df, output_file):
     table = pa.Table.from_pandas(df)
     pq.write_table(table, output_file)
-def read_df(input_file)
+def read_df(input_file):
     pf = ParquetFile(input_file)
     df = pf.to_pandas()
     return df
@@ -152,9 +159,150 @@ def read_df(input_file)
 
 
 
+#%% tick statistics
+df = None
+if not path.exists(tmp_preprocess_tick_df_path1):
+    df = pd.read_csv(raw_tick_data_csv_path)
+    # df = df.iloc[0:10000000]
+    df.columns = ['Timestamp', 'Bid', 'Ask', 'BidVolume', 'AskVolume']
+    df['Timestamp'] = pd.to_datetime(df['Timestamp']).dt.tz_localize(None)
+    df['Time_Diff_In_Seconds'] = (df['Timestamp'] - df['Timestamp'].shift(1)).dt.total_seconds()
+    df = df.round({'BidVolume': 3, 'AskVolume': 3})
+    df.dropna(inplace=True)
+    df.reset_index(drop=True, inplace=True)
+
+    save_df(df, tmp_preprocess_tick_df_path1)
+else:
+    df = read_df(tmp_preprocess_tick_df_path1)
+
+#%% Check Bid Ask Range
+if not path.exists(tmp_preprocess_tick_df_path2):
+    # Financial econometric analysis at ultra-high frequency: Data
+    # handling concerns
+    # C.T. Brownlees∗, G.M. Gallo
+    # http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.107.1176&rep=rep1&type=pdf
+
+    # A METHOD TO ‘‘CLEAN UP’’ ULTRA HIGH-FREQUENCY DATA*
+    # Angelo M. Mineo**
+    # Fiorella Romito**
+    # file:///home/joseph/Downloads/999999_2007_0002_0036-151260.pdf
+
+    # tmp2 = df['Bid'] - df['Bid'].shift(1)
+    # bins = np.array([-0.006, -0.005, -0.004, -0.003, -0.002, -0.001, 0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006])
+    # bin_i = np.digitize(tmp2_val,bins,right=False)
+    # unique, counts = np.unique(bin_i, return_counts=True)
+    # np.asarray((unique, counts)).T
+    # array([[        0,   5560038],
+    #        [        1,   3323026],
+    #        [        2,   8020891],
+    #        [        3,   4912798],
+    #        [        4,   8204253],
+    #        [        5,  28597125],
+    #        [        6,   7964122],
+    #        [        7, 149363475],
+    #        [        8,  27745821],
+    #        [        9,   8218411],
+    #        [       10,   5126276],
+    #        [       11,   7962262],
+    #        [       12,   3264986],
+    #        [       13,   5706813]])
+
+    count = 0
+    k = 60
+    phi = 0.002
+    rollWin = k+1
+    middleIndex = int(rollWin/2)
+    def check_is_invalid_range1(s):
+        global count
+        global phi
+        if count % 1000000 == 0:
+            print('count: ' + str(count/1000000))
+        count += 1
+
+        middleVal = s[middleIndex]
+        seriesWithoutMiddleValue = np.delete(s, (middleIndex), axis=0)
+
+        std = np.std(seriesWithoutMiddleValue)
+        mean = np.mean(seriesWithoutMiddleValue)
+        
+        if abs(middleVal - mean) < 3 * std + phi:
+            return 0
+        return 1
+
+    df['Is_Bid_Invalid_Range'] = df['Bid'].rolling(rollWin).apply(check_is_invalid_range1, raw=True).shift(-1 * middleIndex)
+    print('Bid Completed')
+    count = 0
+
+    df['Is_Ask_Invalid_Range'] = df['Ask'].rolling(rollWin).apply(check_is_invalid_range1, raw=True).shift(-1 * middleIndex)
+    print('Ask Completed')
+
+    df['Is_BidVolume_Invalid_Range'] = df['BidVolume'].rolling(rollWin).apply(check_is_invalid_range1, raw=True).shift(-1 * middleIndex)
+    print('Bid Volume Completed')
+
+    df['Is_AskVolume_Invalid_Range'] = df['AskVolume'].rolling(rollWin).apply(check_is_invalid_range1, raw=True).shift(-1 * middleIndex)
+    print('Ask Volume Completed')
+
+    save_df(df, tmp_preprocess_tick_df_path2)
+else:
+    df = read_df(tmp_preprocess_tick_df_path2)
 
 
 
+#%% Data Validation
+if not path.exists(tmp_preprocess_tick_df_path3):
+    df['Is_Invalid_Timestamp'] = df['Time_Diff_In_Seconds'].map(lambda diff: 1 if diff <= 0 else 0)
+    df['Is_Bid_Less_Than_Or_Equal_To_0'] = df['Bid'].map(lambda x: 1 if x <= 0 else 0)
+    df['Is_BidVolume_Less_Than_Or_Equal_To_0'] = df['BidVolume'].map(lambda x: 1 if x <= 0 else 0)
+
+    save_df(df, tmp_preprocess_tick_df_path3)
+else:
+    df = read_df(tmp_preprocess_tick_df_path3)
+
+
+#%% Check Gaps
+if not path.exists(tmp_preprocess_tick_df_path4):
+    def check_gap(row):
+        if row['Time_Diff_In_Seconds'] >= 900 and (row['Is_Bid_Invalid_Range'] == 1 or row['Is_Ask_Invalid_Range'] == 1):
+            return 1
+        else:
+            return 0
+    df['Is_Data_Gap'] = df[['Time_Diff_In_Seconds', 'Is_Bid_Invalid_Range', 'Is_Ask_Invalid_Range']].apply(check_gap, axis=1)
+
+    # Different Methods to Clean Up Ultra High-Frequency Data(⋆)
+    # http://www.old.sis-statistica.org/files/pdf/atti/rs08_spontanee_12_4.pdf
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.trim_mean.html
+    # http://www.librow.com/articles/article-7
+
+    save_df(df, tmp_preprocess_tick_df_path4)
+else:
+    df = read_df(tmp_preprocess_tick_df_path4)
+
+
+
+
+
+
+
+
+#%% stat
+total_count = len(df.index)
+invalid_bid_count = len(df[df['Is_Bid_Invalid_Range']==1].index)
+invalid_ask_count = len(df[df['Is_Ask_Invalid_Range']==1].index)
+invalid_bid_ask_count = len(df[(df['Is_Bid_Invalid_Range']==1) & (df['Is_Ask_Invalid_Range']==1)].index)
+
+print('Number of invalid bid: ' + str(invalid_bid_count))
+print(invalid_bid_count/total_count * 100)
+print('Number of invalid ask: ' + str(invalid_ask_count))
+print(invalid_ask_count/total_count * 100)
+print('Number of invalid bid and ask: ' + str(invalid_bid_ask_count))
+print(invalid_bid_ask_count/total_count * 100)
+
+
+
+
+
+
+df[(df['Timestamp'] >= parseISODateTime('2005-07-10T23:00:00')) & (df['Timestamp'] < parseISODateTime('2005-07-10T23:01:00'))]
 
 
 
@@ -294,11 +442,10 @@ df
 
 
 
-
 #%% Generate Basic Features
 if not path.exists(basic_features_df_path):
     df['Timestamp'] = pd.to_datetime(df['Timestamp']).dt.tz_localize(None)
-    df['Time_Diff_Freq'] = 1 / (df['Timestamp'] - df['Timestamp'].shift(1)).dt.seconds
+    df['Time_Diff_Freq'] = 1 / (df['Timestamp'] - df['Timestamp'].shift(1)).dt.total_seconds()
     df['Open-Close'] = df['Open'] - df['Close']
     df['High-Low'] = df['High'] - df['Low']
     df['Log_Return'] = np.log(df['Close'] / df['Open']) #np.log(df['Open'] / df['Open'].shift(1))
@@ -474,13 +621,43 @@ print('Number of Should-Hold: ' + str(len(df[df['Short_Hold_Long']==0].index)))
 
 
 
+#%%
+tmp_df = df.copy()
+# tmp_df['Timestamp'] = pd.to_datetime(tmp_df['Timestamp']).dt.tz_localize(None)
+tmp_df.index = pd.DatetimeIndex(tmp_df['Timestamp'])
+def detect_pattern_using_talib(prefix, o, h, l, c):
+    results = {}
+
+    from inspect import getmembers, isfunction
+    functs = [o for o in getmembers(talib) if isfunction(o[1])]
+    for func in functs:
+        funcName = func[0]
+        if funcName.startswith('CDL'):
+            print('Computing Pattern Features Using talib: ' + prefix + '_' + funcName)
+            tmp = getattr(talib, funcName)(o, h, l, c) / 100
+            results[prefix+'_'+funcName] = tmp
+    return pd.DataFrame(results)
+
+resols = params['patterns_features_generation']['resampling_bars']
+for resolStr in resols:
+    tmp = tmp_df[['Close']].resample(resolStr, label='right').ohlc()
+    patterns = detect_pattern_using_talib('patterns_'+resolStr, tmp['Close']['open'], tmp['Close']['high'], tmp['Close']['low'], tmp['Close']['close'])
+    patterns['join_key'] = patterns.index
+    tmp_df['join_key'] = tmp_df.index.floor(resolStr)
+    tmp_df = pd.merge(tmp_df, patterns, on='join_key', how='left')
+    tmp_df.index = tmp_df['Timestamp']
+    tmp_df.drop('join_key', axis=1, inplace=True)
+
+
+#%%
+
+featuresToBeUsed = tmp_df.columns.values[[colName.startswith('patterns_') for colName in tmp_df.columns.values]]
+tmp_df.dropna()[featuresToBeUsed].describe()
 
 
 
-
-
-
-
+#%%
+tmp_df.columns.values
 
 
 
@@ -727,6 +904,8 @@ if path.exists(random_forest_importances_matrix):
     df = df[filteredFeatures]
     # df.to_parquet(random_forest_reduced_features_df_path)
     save_df(df, random_forest_reduced_features_df_path)
+
+
 
 
 
