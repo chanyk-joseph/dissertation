@@ -261,12 +261,23 @@ else:
 
 #%% Check Gaps
 if not path.exists(tmp_preprocess_tick_df_path4):
+    rollWin = 10000
     def check_gap(row):
-        if row['Time_Diff_In_Seconds'] >= 900 and (row['Is_Bid_Invalid_Range'] == 1 or row['Is_Ask_Invalid_Range'] == 1):
+        if row['Time_Diff_In_Seconds'] > 900 and (row['Is_Bid_Invalid_Range'] == 1 or row['Is_Ask_Invalid_Range'] == 1):
             return 1
         else:
             return 0
-    df['Is_Data_Gap'] = df[['Time_Diff_In_Seconds', 'Is_Bid_Invalid_Range', 'Is_Ask_Invalid_Range']].apply(check_gap, axis=1)
+    df['Bid_Diff'] = (df['Bid'] - df['Bid'].shift(1)).apply(abs)
+    print(1)
+    df['Bid_Diff_Rolliing_Mean'] = df['Bid_Diff'].rolling(rollWin).apply(np.mean, raw=True).shift(1)
+    print(2)
+    df['Bid_Diff_Rolliing_Std'] = df['Bid_Diff'].rolling(rollWin).apply(np.std, raw=True).shift(1)
+    print(3)
+    df['Abs_Bid_Diff-Bid_Diff_Rolliing_Mean'] = (df['Bid_Diff'] - df['Bid_Diff_Rolliing_Mean']).apply(abs)
+    print(4)
+    df['Is_Data_Gap'] = (df['Abs_Bid_Diff-Bid_Diff_Rolliing_Mean'] >= 2 * df['Bid_Diff_Rolliing_Std'])
+    print(5)
+    # df['Is_Data_Gap'] = df[['Time_Diff_In_Seconds', 'Bid_Diff']].apply(check_gap, axis=1)
 
     # Different Methods to Clean Up Ultra High-Frequency Data(⋆)
     # http://www.old.sis-statistica.org/files/pdf/atti/rs08_spontanee_12_4.pdf
@@ -301,8 +312,8 @@ print(invalid_bid_ask_count/total_count * 100)
 
 
 
-
-df[(df['Timestamp'] >= parseISODateTime('2005-07-10T23:00:00')) & (df['Timestamp'] < parseISODateTime('2005-07-10T23:01:00'))]
+#%%
+df[(df['Timestamp'] >= parseISODateTime('2019-04-19T05:00:00')) & (df['Timestamp'] < parseISODateTime('2019-04-20T00:00:00'))]
 
 
 

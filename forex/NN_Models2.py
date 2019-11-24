@@ -145,9 +145,7 @@ class NN_Models2:
             x = Dense(FUTURE_PERIOD_PREDICT, activation="sigmoid")(conc)
 
             model = Model(inputs = inp, outputs = x)
-            model.compile(
-                loss = "mean_squared_error", 
-                optimizer = "adam")
+            model.compile(loss = "mean_squared_error", optimizer = "adam")
 
             return model
 

@@ -33,17 +33,23 @@ else:
 pd.set_option("display.max_rows", 10)
 pd.set_option("display.float_format", '{:,.3f}'.format)
 
-rollingWinSize = int(sys.argv[1])
-batchSize = int(sys.argv[2])
-epochNum = int(sys.argv[3])
-weightFileName = sys.argv[4]
-gpuId = sys.argv[5]
-nnModleId = sys.argv[6]
+# rollingWinSize = int(sys.argv[1])
+# batchSize = int(sys.argv[2])
+# epochNum = int(sys.argv[3])
+# weightFileName = sys.argv[4]
+# gpuId = sys.argv[5]
+# nnModleId = sys.argv[6]
 
+rollingWinSize = 600
+batchSize = 32
+epochNum = 1
+weightFileName = 'raw_data_preprocessing_model.h5'
+gpuId = 0
+nnModleId = 2
 
 #%% Settings Hyper Parameters and file paths
 params = {
-    'currency': 'AUDUSD',
+    'currency': 'USDJPY',
     'output_folder': 'outputs_using_ticks_1000_from_2005',
     'preprocessing': {
         'is_tick': True,
@@ -140,7 +146,7 @@ if not os.path.exists(output_folder):
 def save_df(df, output_file):
     table = pa.Table.from_pandas(df)
     pq.write_table(table, output_file)
-def read_df(input_file)
+def read_df(input_file):
     pf = ParquetFile(input_file)
     df = pf.to_pandas()
     return df
